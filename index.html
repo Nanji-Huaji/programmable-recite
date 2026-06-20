@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>可编程系统设计背诵助手</title>
+<style>
+/* ===== Reset & Base ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  background: #f5f3f0;
+  color: #2c2c2c;
+  line-height: 1.8;
+  min-height: 100vh;
+}
+
+/* ===== Top Bar ===== */
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,255,255,0.85); backdrop-filter: blur(20px);
+  border-bottom: 1px solid #e8e4df;
+  padding: 12px 24px;
+  display: flex; align-items: center; gap: 16px;
+  flex-wrap: wrap;
+}
+.topbar h1 {
+  font-size: 1.25rem; font-weight: 700; color: #3a3226;
+  white-space: nowrap;
+}
+.topbar .spacer { flex: 1; }
+.topbar label { font-size: 0.85rem; color: #6b6358; white-space: nowrap; }
+.topbar input[type=range] {
+  width: 140px; accent-color: #c17f3a;
+}
+.topbar .intensity-val {
+  font-weight: 700; color: #c17f3a; min-width: 2.5em; text-align: center;
+}
+.topbar .btn {
+  padding: 6px 18px; border: none; border-radius: 8px; font-size: 0.85rem;
+  cursor: pointer; font-weight: 600; transition: all 0.2s;
+}
+.btn-check { background: #c17f3a; color: #fff; }
+.btn-check:hover { background: #a86b2e; }
+.btn-reset { background: #e8e4df; color: #5c5347; }
+.btn-reset:hover { background: #d5cfc7; }
+.btn-reveal { background: transparent; color: #6b6358; border: 1px solid #ccc5bb !important; }
+.btn-reveal:hover { background: #f0ece6; }
+
+/* ===== Layout ===== */
+.layout { display: flex; max-width: 1200px; margin: 0 auto; }
+.sidebar {
+  position: sticky; top: 70px;
+  width: 240px; min-width: 240px; height: calc(100vh - 70px);
+  overflow-y: auto; padding: 20px 16px;
+  border-right: 1px solid #e8e4df;
+  background: rgba(255,255,255,0.5);
+}
+.sidebar h3 {
+  font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em;
+  color: #9c9488; margin-bottom: 8px; margin-top: 16px;
+}
+.sidebar h3:first-child { margin-top: 0; }
+.sidebar a {
+  display: block; padding: 6px 10px; font-size: 0.82rem; color: #5c5347;
+  text-decoration: none; border-radius: 6px; transition: all 0.15s;
+  border-left: 2px solid transparent;
+}
+.sidebar a:hover, .sidebar a.active {
+  background: #f0ece6; color: #c17f3a; border-left-color: #c17f3a;
+}
+.main { flex: 1; padding: 24px 32px 60px; min-width: 0; }
+
+/* ===== Progress ===== */
+.progress-bar-wrap {
+  margin-bottom: 20px; background: #e8e4df; border-radius: 10px; height: 8px; overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%; background: linear-gradient(90deg, #c17f3a, #d4954b); border-radius: 10px;
+  transition: width 0.4s ease;
+}
+.progress-text { font-size: 0.8rem; color: #9c9488; margin-top: 4px; text-align: right; }
+
+/* ===== Section Card ===== */
+.section-card {
+  background: #fff; border-radius: 14px; padding: 28px 32px; margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+  transition: box-shadow 0.25s;
+  scroll-margin-top: 80px;
+}
+.section-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.04); }
+.section-card h2 {
+  font-size: 1.05rem; font-weight: 700; color: #3a3226; margin-bottom: 16px;
+  padding-bottom: 12px; border-bottom: 2px solid #f0ece6;
+}
+.section-card .content { font-size: 0.95rem; color: #4a4238; }
+.section-card .content p { margin-bottom: 12px; }
+.section-card .content p:last-child { margin-bottom: 0; }
+.section-card .content ul, .section-card .content ol { padding-left: 1.5em; margin-bottom: 12px; }
+.section-card .content li { margin-bottom: 4px; }
+
+/* ===== Cloze ===== */
+.cloze {
+  display: inline-block; position: relative; margin: 0 2px;
+}
+.cloze input {
+  border: none; border-bottom: 2px dashed #c17f3a; background: #fefbf6;
+  padding: 2px 6px; font-size: 0.95rem; font-family: inherit; color: #3a3226;
+  outline: none; border-radius: 3px 3px 0 0; transition: all 0.2s;
+  min-width: 60px;
+}
+.cloze input:focus {
+  border-bottom-color: #3a3226; background: #fff8ed; box-shadow: 0 1px 4px rgba(193,127,58,0.15);
+}
+.cloze.correct input {
+  border-bottom-color: #4a9e5c; background: #f0faf3; color: #2d6a3a;
+}
+.cloze.incorrect input {
+  border-bottom-color: #d1453b; background: #fef5f4; color: #b53128;
+}
+.cloze .hint {
+  position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
+  background: #4a9e5c; color: #fff; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px;
+  white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.2s;
+  z-index: 10;
+}
+.cloze.incorrect .hint { background: #d1453b; }
+.cloze.show-hint .hint { opacity: 1; }
+.cloze .revealed {
+  color: #c17f3a; font-weight: 600; border-bottom: 2px dotted #c17f3a;
+}
+
+/* ===== Image ===== */
+.section-card .img-wrap {
+  margin: 16px 0; text-align: center;
+}
+.section-card .img-wrap img {
+  max-width: 100%; border-radius: 8px; border: 1px solid #e8e4df;
+}
+.section-card .img-wrap .caption {
+  font-size: 0.78rem; color: #9c9488; margin-top: 6px;
+}
+
+/* ===== Card Actions ===== */
+.card-actions {
+  margin-top: 20px; padding-top: 14px;
+  border-top: 1px solid #f0ece6;
+  display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap;
+}
+.card-actions .btn-mini {
+  font-size: 0.75rem; padding: 4px 12px; border-radius: 6px; border: 1px solid #ddd8cf;
+  background: #faf8f5; color: #6b6358; cursor: pointer; font-family: inherit;
+  transition: all 0.15s;
+}
+.card-actions .btn-mini:hover { background: #f0ece6; color: #3a3226; }
+.card-actions .btn-mini.check-card:hover { background: #fef6ed; color: #c17f3a; border-color: #c17f3a; }
+.card-actions .btn-mini.answer-card:hover { background: #eef7f0; color: #4a9e5c; border-color: #4a9e5c; }
+.card-actions .btn-mini.edit-card:hover { background: #f0f2fb; color: #4a6fa5; border-color: #4a6fa5; }
+.card-actions .btn-mini.clear-card:hover { background: #fef5f4; color: #d1453b; border-color: #d1453b; }
+
+/* ===== Hint & Edit Buttons ===== */
+.btn-edit { background: #5b8c5a; color: #fff; }
+.btn-edit:hover { background: #4a7a49; }
+.btn-hint {
+  background: transparent; color: #6b6358; border: 1px solid #ccc5bb;
+  padding: 4px 10px; border-radius: 6px; font-size: 0.78rem; cursor: pointer;
+  font-family: inherit; transition: all 0.15s;
+}
+.btn-hint:hover { background: #f0ece6; }
+.btn-hint.active { background: #c17f3a; color: #fff; border-color: #c17f3a; }
+.hint-group { display: flex; gap: 2px; }
+.sep { width: 1px; background: #ddd8cf; margin: 0 8px; align-self: stretch; }
+
+/* ===== Mobile ===== */
+@media (max-width: 768px) {
+  .layout { flex-direction: column; }
+  .sidebar {
+    position: static; width: 100%; min-width: auto; height: auto;
+    border-right: none; border-bottom: 1px solid #e8e4df;
+    display: flex; overflow-x: auto; gap: 8px; padding: 12px 16px;
+    flex-wrap: nowrap; -webkit-overflow-scrolling: touch;
+  }
+  .sidebar h3 { display: none; }
+  .sidebar a { white-space: nowrap; border-left: none; border-bottom: 2px solid transparent; }
+  .sidebar a.active { border-left: none; border-bottom-color: #c17f3a; }
+  .main { padding: 16px; }
+  .topbar { padding: 10px 16px; gap: 10px; }
+  .topbar h1 { font-size: 1.05rem; }
+  .section-card { padding: 20px; }
+}
+
+/* ===== Dark Mode ===== */
+@media (prefers-color-scheme: dark) {
+  body { background: #1c1a17; color: #d4cec4; }
+  .topbar { background: rgba(30,28,25,0.85); border-bottom-color: #3a352d; }
+  .topbar h1 { color: #e8e0d4; }
+  .topbar label { color: #9c9288; }
+  .btn-reset { background: #3a352d; color: #c5bdb2; }
+  .btn-reset:hover { background: #4a443b; }
+  .btn-reveal { color: #9c9288; border-color: #4a443b !important; }
+  .btn-reveal:hover { background: #2d2922; }
+  .btn-edit { background: #4a7a49; color: #d4e8d0; }
+  .btn-edit:hover { background: #3a6a39; }
+  .btn-hint { color: #9c9288; border-color: #4a443b; }
+  .btn-hint:hover { background: #2d2922; }
+  .btn-hint.active { background: #c17f3a; color: #fff; border-color: #c17f3a; }
+  .sep { background: #4a443b; }
+  .card-actions { border-top-color: #3a352d; }
+  .card-actions .btn-mini { background: #2d2922; color: #9c9288; border-color: #3a352d; }
+  .card-actions .btn-mini:hover { background: #3a352d; color: #c5bdb2; }
+  .section-card { background: #25221d; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+  .section-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+  .section-card h2 { color: #e8e0d4; border-bottom-color: #3a352d; }
+  .section-card .content { color: #c5bdb2; }
+  .cloze input { background: #2d2922; border-bottom-color: #c17f3a; color: #e0d8cc; }
+  .cloze input:focus { background: #383225; }
+  .cloze.correct input { background: #1e3022; color: #7bc98a; }
+  .cloze.incorrect input { background: #321f1e; color: #e0635a; }
+  .sidebar { background: rgba(30,28,25,0.5); border-color: #3a352d; }
+  .sidebar a { color: #9c9288; }
+  .sidebar a:hover, .sidebar a.active { background: #2d2922; color: #c17f3a; }
+  .progress-bar-wrap { background: #3a352d; }
+}
+</style>
+</head>
+<body>
+
+<!-- ==== Top Bar ==== -->
+<div class="topbar">
+  <h1>📖 可编程系统设计背诵助手</h1>
+  <div class="spacer"></div>
+  <label for="intensity">挖空力度</label>
+  <input type="range" id="intensity" min="0" max="100" value="50" step="5">
+  <span class="intensity-val" id="intensityVal">50%</span>
+  <span class="sep"></span>
+  <span class="hint-group">
+    <button class="btn-hint active" data-mode="none" onclick="setHintMode('none')">无提示</button>
+    <button class="btn-hint" data-mode="first" onclick="setHintMode('first')">首字</button>
+    <button class="btn-hint" data-mode="length" onclick="setHintMode('length')">字数</button>
+  </span>
+  <button class="btn-hint" id="randomToggle" onclick="toggleRandomMode()">🎲 随机</button>
+  <button class="btn btn-check" onclick="checkAll()">✅ 检查答案</button>
+  <button class="btn btn-edit" onclick="clearCheckState()">✏️ 继续编辑</button>
+  <button class="btn btn-reveal" onclick="revealAll()">👁 显示答案</button>
+  <button class="btn btn-reset" onclick="resetAll()">🔄 重置</button>
+</div>
+
+<div class="layout">
+  <!-- ==== Sidebar ==== -->
+  <nav class="sidebar" id="sidebar"></nav>
+
+  <!-- ==== Main Content ==== -->
+  <main class="main">
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressBar" style="width: 0%"></div></div>
+    <div class="progress-text" id="progressText">已填写 0 / 0</div>
+    <div id="contentArea"></div>
+  </main>
+</div>
+
+<script>
+// ============================================================
+// CONTENT DATA — inline {keyword} markup
+// Format: {importance:keyword} or {keyword} (default importance=1)
+//         {2:keyword} = importance 2, {3:keyword} = importance 3
+//         {keyword=alt1,alt2} = accepted alternate answers
+//         {2:keyword=alt1,alt2} = combined
+// ============================================================
+
+const COURSE_DATA = [
+  // ── PCB Chapter ──
+  {
+    id: 'pcb-1', chapter: '电子系统与PCB', title: '1、电子系统的定义',
+    content: '将由{电子元器件}或部件组成的能够{产生}、{传输}、{采集}或{处理}{电信号}及信息的{客观实体}称为{电子系统}。'
+  },
+  {
+    id: 'pcb-2', chapter: '电子系统与PCB', title: '2、电子系统举例',
+    content: '{电源系统}、{通信系统}、{雷达系统}、{计算机系统}、{电子测量系统}、{自动控制系统}等。'
+  },
+  {
+    id: 'pcb-3', chapter: '电子系统与PCB', title: '3、电子系统的基本构成',
+    content: '{机箱}、{外壳}、{电源}、{输入}、{输出}接口、{连接线缆}、{信号处理单元}（{电路板}）、模组、部件、外设。'
+  },
+  {
+    id: 'pcb-4', chapter: '电子系统与PCB', title: '4、印制线路板',
+    content: '印制线路板简称{印制板}，英文为{Printed Circuit Board}，缩写为{PCB}。'
+  },
+  {
+    id: 'pcb-5', chapter: '电子系统与PCB', title: '5、印制电路概念',
+    content: '印制电路概念于{1936}年由英国{Eisler}博士提出，首创了{铜箔腐蚀法}工艺。'
+  },
+  {
+    id: 'pcb-6', chapter: '电子系统与PCB', title: '6、PCB发展',
+    content: '{1953}年出现了{双面板}，并采用{电镀}工艺使两面导线互连；{1960}年出现了{多层板}；{1990}年出现了{积层多层板}。'
+  },
+  {
+    id: 'pcb-7', chapter: '电子系统与PCB', title: '7、PCB分类',
+    content: '1. 按用途分：{民用}、{工业}、{军事}。\n2. 按材质分：有机材质（{酚醛树脂}、{玻璃纤维/环氧树脂}、{聚酰亚胺}、{BT/Epoxy}）、无机材质（{铝}、{陶瓷}）。\n3. 按结构分：{单面板}、{双面板}、{多层板}。\n4. 按硬度性能分：{硬板}、{软板}、{软硬结合板}。\n5. 按孔的导通状态分：{埋孔板}、{盲孔板}、{通孔板}。\n6. 按表面制作分：{喷锡板}、{镀金板}、{沉金板}、{金手指板}、{沉锡板}、{沉银板}。'
+  },
+  {
+    id: 'pcb-8', chapter: '电子系统与PCB', title: '8、常用FR-4覆铜板组成',
+    content: '{玻璃纤维布}、{环氧树脂}、{铜箔}、{填料}。'
+  },
+  {
+    id: 'pcb-9', chapter: '电子系统与PCB', title: '9、多层PCB板的生产工艺流程',
+    content: '开料 → 内层图形 → {层压} → {钻孔} → {电镀} → 外层 → {阻焊} → {表面处理} → 成型 → {电测试} → FQC → FQA → 包装 → 成品出厂。'
+  },
+  {
+    id: 'pcb-10', chapter: '电子系统与PCB', title: '10、PCB常用术语',
+    content: '1. {元件面}：安装元件的面，大多数元器件都安装在朝上的一面。\n2. {焊接面}：与元件面相对的那一面。\n3. {丝印层}：印刷元器件标号、名称等字符的印刷层。\n4. {阻焊图}：为防止不需要焊接的印刷导线被焊接而绘制的一种图形，制板过程中在此涂一层阻焊剂。\n5. {焊盘}：用于连接和焊接元件的一种导电图形。\n6. {金属化孔}：也称为"通孔"，孔壁沉积有金属，用于层间导电图形的连接。'
+  },
+  {
+    id: 'pcb-11', chapter: '电子系统与PCB', title: '11、电路板主要工作层面',
+    content: '{信号层}、{内部电源/接地层}、{机械层}、{防护层}、{丝印层}。'
+  },
+  {
+    id: 'pcb-12', chapter: '电子系统与PCB', title: '12、PCB布局原则',
+    content: '1. 根据结构图设置板框尺寸，按结构要素布置安装孔、接插件等需要定位的器件，并赋予不可移动属性；按工艺设计规范进行尺寸标注。\n2. 根据结构图和生产加工时所需的夹持边设置印制板的{禁止布线区}、禁止布局区域。\n3. 遵照"先大后小，先难后易"的布置原则，重要单元电路、{核心元器件}应优先布局。\n4. 布局中应参考{原理框图}，根据单板的{主信号流向}规律安排主要元器件。\n5. 布局应尽量满足：总的连线尽可能短，{关键信号线}最短；高电压、大电流信号与{小电流、低电压弱信号}完全分开；{模拟信号}与{数字信号}分开；{高频信号}与{低频信号}分开；高频元器件的间隔要充分。\n6. 相同结构电路部分尽可能采用"{对称式}"标准布局。\n7. 按照{均匀分布}、{重心平衡}、版面美观的标准优化布局。\n8. 同类型插装元器件在X或Y方向上应朝{一个方向}放置。\n9. {发热元件}一般应均匀分布；温度敏感器件应{远离}发热量大的元器件。\n10. 元器件排列要便于{调试}和{维修}，小元件周围不能放置大元件。\n11. {去耦电容}的布局要尽量{靠近}芯片电源管脚。\n12. 使用同一种电源的器件尽量放在一起，以便于将来的{电源分隔}。\n13. 串联匹配电阻靠近{信号驱动端}，负载匹配电阻靠近{信号接收端}。\n14. 数字电流不应流经{模拟器件}，高速电流不应流经{低速器件}。'
+  },
+  {
+    id: 'pcb-13', chapter: '电子系统与PCB', title: '13、PCB的布线原则',
+    content: '1. 首先应对{电源线}和{地线}进行布线；尽量加宽电源、地线宽度。\n2. 对要求比较严格的线（如{高频线}）要优先布线。\n3. 输入端与输出端的边线应避免{相邻平行}，以免产生{反射干扰}。\n4. 两相邻层的布线要{互相垂直}，平行容易产生{寄生耦合}。\n5. 必要时应在信号线之间加{地线隔离}。\n6. {振荡器}外壳接地。\n7. {时钟线}要尽量短。\n8. 时钟振荡电路下面要加大{地的面积}，不应走其他信号线。\n9. 转角处采用{45°折线}或弧线布线，不可使用{90°折线}，以减小高频信号辐射。\n10. 信号线不要形成{环路}；如不可避免，环路应尽量小。\n11. 信号线的{过孔}要尽量少。\n12. 关键的线尽量短，并在两边加上{保护地}。\n13. 关键信号线要依据{传输线的特性阻抗模型}来设计线宽、线间距。\n14. 重要模拟、高频信号可考虑用{线缆}连接。\n15. 关键信号应预留{测试点}。\n16. {差分线}要等长。\n17. 布线完成后应进行优化；对未布线区域进行{地线填充}，用{大面积铜层}作地线。'
+  },
+  {
+    id: 'pcb-14', chapter: '电子系统与PCB', title: '14、开关电源和线性电源的特点',
+    content: '1. {开关电源}：效率{高}、功率{大}、输出电源调整{灵活}；噪声纹波{大}。\n2. {线性电源}：效率{低}、功率{有限}；噪声纹波{小}。'
+  },
+  {
+    id: 'pcb-15', chapter: '电子系统与PCB', title: '15、数字电源和模拟电源的设计考虑',
+    content: '数字电源和模拟电源应{分开设计}；多电源系统需{独立规划}，并综合考虑电源功耗、电源噪声干扰来源以及线性电源、开关电源的特点。'
+  },
+  {
+    id: 'pcb-16', chapter: '电子系统与PCB', title: '16、电子系统为什么要接地',
+    content: '1. 防止电力、电子设备和建筑物遭{雷击}，将雷击电流通过{避雷针}引入大地。\n2. 接地是保护{人身安全}的有效手段。\n3. 设备之间信号互连要求各设备都要有一个基准"{地}"作为{信号参考地}。\n4. 解决信号之间互扰等{电磁兼容}问题，接地不当会影响系统运行的{可靠性}和{稳定性}。'
+  },
+  {
+    id: 'pcb-17', chapter: '电子系统与PCB', title: '17、数字地和模拟地的PCB设计处理',
+    content: '1. 模拟信号和数字信号都要{回流到地}。\n2. 数字信号能量{高}、频谱{宽}，在数字地上引起的噪声大。\n3. 模拟地和数字地混在一起时，{数字噪声}会影响模拟信号。\n4. 模拟地和数字地要{分开处理}，{单点}接在一起。\n5. 尽量阻隔{数字地上的噪声}进入模拟地。'
+  },
+
+  // ── FPGA Chapter ──
+  {
+    id: 'fpga-1', chapter: 'FPGA', title: '1、FPGA内部主要构成单元',
+    content: '1. {CLB}（可配置逻辑块）。\n2. {IOB}（输入输出块）。\n3. 连接资源（{短线}、{长线}、{时钟网络}、{直接连接}）。\n4. 硬核（{块存储}、{乘法器}、{时钟管理}等）。'
+  },
+  {
+    id: 'fpga-2', chapter: 'FPGA', title: '2、集成电路层次化设计包含哪几层',
+    content: '1. {系统层}。\n2. {算法层}。\n3. {寄存器传输层}。\n4. {逻辑层}。\n5. {电路层}。\n6. {版图层}。'
+  },
+  {
+    id: 'fpga-3', chapter: 'FPGA', title: '3、FPGA设计输入有哪些方式',
+    content: 'FPGA设计输入方式主要包括{图形描述}方式、{文字描述}方式以及图形、文字交叉使用三类。\n1. 图形描述方式：适合描述器件内部{互联关系}；可直观描述整体层次关系；包括{方框图}、{原理图}、{状态图}、{时序波形图}等；优点{直观易懂}；缺点受{工艺库}、{逻辑宏单元}限制，通用性和可移植性差。\n2. 文字描述方式：可以描述电路{结构}，也可以描述电路{行为}；适合描述复杂行为；硬件描述语言（HDL）主要有{VHDL}和{Verilog HDL}两种。\n3. 图形、文字交叉使用：大规模系统设计中常将{文字描述}和{图形描述}交叉使用。'
+  },
+  {
+    id: 'fpga-4', chapter: 'FPGA', title: '4、FPGA设计自顶向下流程图',
+    content: 'FPGA设计采用{自顶向下}（{Top-Down}）的层次化设计流程。主要流程为：{系统层}确定系统设计的功能和指标；{算法层}进行系统分析并确定系统设计规范；{寄存器传输层}进行设计输入和RTL级模型建立；{逻辑、电路层}进行逻辑综合和可测性设计；后端进行{版图预布局布线}、时钟树建立、版图设计等，最终完成系统版图数据提交（{Tape out}）。',
+    images: [{ src: 'images/fig-fpga-topdown-flow-03.png', caption: '集成电路自顶向下（Top-Down）流程图' }]
+  },
+  {
+    id: 'fpga-5', chapter: 'FPGA', title: '5、集成电路设计输入的图形描述方式特点',
+    content: '1. 直观描述整体{层次关系}、输入/输出端口、信号输入/输出关系。\n2. 包括{方框图}、{原理图}、{状态图}、{时序波形图}。\n3. {直观易懂}。\n4. 受{工艺库}、{逻辑宏单元}限制。\n5. {通用性}、{可移植性}差。'
+  },
+  {
+    id: 'fpga-6', chapter: 'FPGA', title: '6、集成电路设计输入的语言描述方式特点',
+    content: '1. 可以描述电路{结构}，也可以描述电路{行为}，适合描述{复杂行为}。\n2. 包括自然语言描述、网表、硬件描述语言等。\n3. 硬件描述语言（HDL）采用最多。\n4. HDL语言主要有{VHDL}和{Verilog HDL}两种。'
+  },
+  {
+    id: 'fpga-7', chapter: 'FPGA', title: '7、什么是集成电路设计仿真',
+    content: '1. 利用{仿真工具软件}对设计的行为进行模拟。\n2. {系统层}仿真。\n3. {电路层}仿真。\n4. {寄存器传输层}仿真。'
+  },
+  {
+    id: 'fpga-8', chapter: 'FPGA', title: '8、什么是逻辑仿真',
+    content: '1. 利用计算机软件工具构造{硬件模型}，给定{输入激励}，模拟确定电路响应，验证硬件设计正确性的过程。\n2. 逻辑仿真可分为：{功能块级仿真}、{逻辑门级仿真}、{开关级仿真}。'
+  },
+  {
+    id: 'fpga-9', chapter: 'FPGA', title: '9、动态时序仿真的优缺点',
+    content: '1. 动态时序仿真：对逻辑综合后的网表施加{测试激励}，模拟电路工作环境，对电路进行仿真。\n2. 将{功能仿真}和{时序仿真}同时进行，时序分析结果较{精确}。\n3. 缺点：对大规模集成电路，创建测试向量工作量{巨大}，{耗时}。\n4. 不可能开发出{完备测试向量}，找出所有潜在故障。'
+  },
+  {
+    id: 'fpga-10', chapter: 'FPGA', title: '10、静态时序分析的基本步骤',
+    content: '1. 静态时序分析（{Static Timing Analysis=STA}）是基于{路径}对设计进行时序分析。\n2. 基本步骤：根据电路网表的{拓扑}将设计分成若干{路径集合}；计算每一条路径上的{延时}；对电路时序进行判断，衡量{电路性能}。路径包括{时序单元}、{门级单元}、{传输线}等。'
+  },
+  {
+    id: 'fpga-11', chapter: 'FPGA', title: '11、静态时序分析的优缺点',
+    content: '1. 优点：无需外加{测试激励}，运行速度{快}，占用内存{小}；与电路输入激励无关，方便对{大规模集成电路}进行时序验证；可以找到设计中的{关键路径}，决定最高工作频率；可以{穷尽}所有路径的时序信息，相比动态时序仿真有更强的{完备性}；可识别{建立/保持}、{恢复/移除}、最小和最大跳变、{时钟脉冲宽度}和{时钟畸变}、门级时钟瞬时脉冲检测、{总线竞争}与{总线悬浮}错误等时序故障。\n2. 缺点：不能同时进行{功能仿真}；仅适用于{同步时序电路}。'
+  },
+  {
+    id: 'fpga-12', chapter: 'FPGA', title: '12、如何进行动态时序仿真',
+    content: '1. 对逻辑综合后的网表，或者布局布线后的版图中所产生的网表，施加{测试激励}，模拟电路工作环境并进行仿真。\n2. 通过特定测试激励验证设计，将{功能仿真}和{时序仿真}同时进行，得到较精确的时序分析结果。'
+  },
+  {
+    id: 'fpga-13', chapter: 'FPGA', title: '13、如何进行静态时序分析',
+    content: '1. 根据{电路网表拓扑}将设计分成若干{路径集合}。\n2. 计算每一条路径上的{延时}（如建立时间、保持时间、传输延时等）。\n3. 对{电路时序}进行判断，衡量电路性能。'
+  },
+  {
+    id: 'fpga-14', chapter: 'FPGA', title: '14、建立时间（setup time）',
+    content: '建立时间（{setup time}）：指在时钟有效沿（上升沿）{之前}，数据输入端信号必须保持稳定的{最短时间}。',
+    images: [{ src: 'images/fig-setup-time.jpg', caption: '建立时间（setup time）示意图' }]
+  },
+  {
+    id: 'fpga-15', chapter: 'FPGA', title: '15、保持时间（hold time）',
+    content: '保持时间（{hold time}）：指在时钟有效沿（上升沿）{之后}，数据输入端信号必须保持稳定的{最短时间}。',
+    images: [{ src: 'images/fig-hold-time.jpg', caption: '保持时间（hold time）示意图' }]
+  },
+  {
+    id: 'fpga-16', chapter: 'FPGA', title: '16、静态时序分析的时序延迟关系',
+    content: '1. 需要考虑的对象：{发送触发器}（Launch flip-flop）到{接收/捕获触发器}（Capture flip-flop）之间的时钟路径；从发送触发器输出端到接收触发器输入端之间的{数据路径}；接收触发器本身的{建立时间}和{保持时间}约束。\n2. 发送路径：时钟到达发送触发器UFF0/CK，数据经UFF0/Q输出后，通过{组合逻辑}到达UFF1/D。\n3. 捕获路径：CLKM → BUF(capture) → UFF1/CK。\n4. 建立时间约束：数据到达时间 Ta = {Tlaunch} + {Tck2q} + {Tdp}；要求时间 Tr = Tcapture + Tclk - Tsetup；约束 Tr - Ta = {Tmargin} ≥ 0。\n5. 保持时间约束：数据到达时间 Ta = Tlaunch + Tck2q + Tdp；要求时间 Tr = Tcapture + Thold；约束 Ta - Tr = Tmargin ≥ 0。\n6. 延迟产生原因：Tlaunch、Tcapture由{时钟网络缓冲器}和连线延迟产生；Tck2q由{触发器内部电路延迟}产生；Tdp由{门电路延迟}和{互连线延迟}产生；Tsetup、Thold是{接收触发器内部电路}的固有时序要求。',
+    images: [
+      { src: 'images/fig-sta-analysis-page-17.png', caption: 'Launch/Capture 路径关系示意图' },
+      { src: 'images/fig-sta-analysis-page-18.png', caption: '建立时间分析示意图' },
+      { src: 'images/fig-sta-analysis-page-19.png', caption: '保持时间分析示意图' },
+      { src: 'images/fig-sta-analysis-page-20.png', caption: '建立时间与保持时间有效窗口示意图' }
+    ]
+  },
+  {
+    id: 'fpga-17', chapter: 'FPGA', title: '17、什么是逻辑综合',
+    content: '根据设计的{逻辑功能}和{行为描述}，在一定约束条件（{面积}、{时序}、{功耗}等）下，利用{EDA工具}生成{逻辑门电路}，实现{软件描述}到{硬件结构}的转换。'
+  },
+  {
+    id: 'fpga-18', chapter: 'FPGA', title: '18、输入逻辑综合工具的三种信息',
+    content: '{RTL级描述}、{约束条件}、{工艺库}。'
+  },
+  {
+    id: 'fpga-19', chapter: 'FPGA', title: '19、什么是RTL级描述',
+    content: 'RTL级描述了数字电路中{寄存器}之间的{数据传输}和{逻辑操作}，将电路系统视为由{寄存器}和连接它们的{组合逻辑}构成。'
+  },
+  {
+    id: 'fpga-20', chapter: 'FPGA', title: '20、FPGA设计中的约束条件',
+    content: '约束（constraints）：关于电路系统的设计要求，用于控制{优化输出}和{映射工艺}。\n1. {环境约束}：针对芯片工作环境，如电压、温度、负载和驱动等。\n2. {时序约束}：针对芯片工作时钟，如时钟周期、接口时序、延时等。\n3. {设计规则约束}：针对工艺规则，如面积、位置、最大扇入扇出、最大电容等。'
+  },
+  {
+    id: 'fpga-21', chapter: 'FPGA', title: '21、面积约束和延时约束的关系',
+    content: '面积约束和延时约束是{相互矛盾}的关系。'
+  },
+  {
+    id: 'fpga-22', chapter: 'FPGA', title: '22、逻辑综合结果的优缺点分析',
+    content: '1. 逻辑重组/化简：优点是通过逻辑重组减少{冗余逻辑}，降低{门数}和{面积}；缺点是公共逻辑节点可能{扇出增大}，负载增加时可能影响{延时}。\n2. 提取公共项：优点是提取公共项（如b+c），减少{门数}，各输出端{时序更匹配}；缺点是公共项需要驱动多路后级逻辑，{扇出增大}时可能带来额外延时。\n3. 延时约束下的综合：优点是将晚到达的信号放在{靠近输出端}的位置，减小{关键路径延时}，优化时序；缺点是可能增加{连线复杂度}或少量面积。\n4. 资源共享：优点是多个表达式共享{公共运算}，减少重复加法器，{电路面积更小}；缺点是共享结果节点{扇出增大}，可能增加该节点延时。',
+    images: [
+      { src: 'images/fig-synth-logic-1.jpg', caption: '逻辑综合结果对比图（一）' },
+      { src: 'images/fig-synth-logic-2.jpg', caption: '逻辑综合结果对比图（二）' },
+      { src: 'images/fig-synth-delay.jpg', caption: '延时约束下的逻辑综合结果' },
+      { src: 'images/fig-synth-resource-sharing.jpg', caption: '资源共享相关的逻辑综合结果' }
+    ]
+  },
+  {
+    id: 'fpga-23', chapter: 'FPGA', title: '23、时钟的不确定性',
+    content: '时钟的不确定性主要包括：{时钟抖动}（{jitter}）：时钟边沿相对于理想时钟边沿的时间波动；{时钟偏斜}（{skew}）：同一时钟信号到达不同触发器时产生的{时间差}。在时序约束中，可使用{set_clock_uncertainty}命令描述这类不确定性。公式：uncertainty = {jitter} + {skew}。',
+    images: [{ src: 'images/clock-constraint-slide-25.png', caption: '时钟附加约束中的 uncertainty、jitter 与 skew' }]
+  }
+];
+
+// ============================================================
+// PARSING ENGINE
+// ============================================================
+
+function parseContent(text) {
+  // Parses {importance:keyword=alt1,alt2} markup
+  // Returns array of {type:'text'|'keyword', value, importance, accepted}
+  const segments = [];
+  const regex = /\{(\d+:)?([^}=]+?)(?:=([^}]+))?\}/g;
+  let lastIdx = 0;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIdx) {
+      segments.push({ type: 'text', value: text.slice(lastIdx, match.index) });
+    }
+    const impPrefix = match[1] ? parseInt(match[1]) : 1;
+    const keyword = match[2].trim();
+    const altStr = match[3] || '';
+    const accepted = [keyword];
+    if (altStr) {
+      altStr.split(',').forEach(a => { const t = a.trim(); if (t && !accepted.includes(t)) accepted.push(t); });
+    }
+    segments.push({ type: 'keyword', value: keyword, importance: impPrefix, accepted });
+    lastIdx = match.index + match[0].length;
+  }
+  if (lastIdx < text.length) {
+    segments.push({ type: 'text', value: text.slice(lastIdx) });
+  }
+  return segments;
+}
+
+// ============================================================
+// RENDERING
+// ============================================================
+
+let allClozeInputs = [];
+let intensity = 50;
+let checked = false;
+
+function getIntensity() { return intensity; }
+function setIntensity(val) {
+  intensity = val;
+  document.getElementById('intensity').value = val;
+  document.getElementById('intensityVal').textContent = val + '%';
+}
+
+let randomMode = false;
+let randomSeed = Date.now();
+let hintMode = 'none';
+
+function getIntensity() { return intensity; }
+function setIntensity(val) {
+  intensity = val;
+  document.getElementById('intensity').value = val;
+  document.getElementById('intensityVal').textContent = val + '%';
+}
+
+function hashString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+function shouldBlank(importance, keyword) {
+  // 5 levels: 1=core(>=5%), 2=key(>=25%), 3=detail(>=45%), 4=supp(>=65%), 5=ext(>=85%)
+  const I = getIntensity();
+  if (I <= 3) return false;
+  if (I >= 97) return true;
+  const thresholds = [0, 5, 25, 45, 65, 85];
+  const threshold = thresholds[importance] || 95;
+  if (I < threshold) return false;
+  if (!randomMode) return true;
+  const h = hashString(keyword + randomSeed);
+  return (h % 100) < I;
+}
+
+function toggleRandomMode() {
+  randomMode = !randomMode;
+  const btn = document.getElementById('randomToggle');
+  if (!btn) return;
+  btn.classList.toggle('active', randomMode);
+  btn.textContent = randomMode ? '🎲 随机:开' : '🎲 随机';
+  if (randomMode) randomSeed = Date.now();
+  renderAll();
+}
+
+function setHintMode(mode) {
+  hintMode = mode;
+  document.querySelectorAll('.btn-hint').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  updatePlaceholders();
+}
+
+function computePlaceholder(inp) {
+  const keyword = inp.getAttribute('data-keyword') || '';
+  const unordered = inp.hasAttribute('data-unordered');
+  switch (hintMode) {
+    case 'first': { const f = keyword[0] || ''; return f ? f + '…' : '…'; }
+    case 'length': {
+      if (unordered) { const parts = keyword.split(',').filter(Boolean); return parts.length + '项'; }
+      const len = keyword.replace(/\s/g, '').length;
+      return len > 0 ? '＿'.repeat(len) : '…';
+    }
+    default: return '…';
+  }
+}
+
+function updatePlaceholders() {
+  document.querySelectorAll('.cloze-input').forEach(inp => { inp.placeholder = computePlaceholder(inp); });
+}
+
+function renderAll() {
+  allClozeInputs = [];
+  checked = false;
+  const area = document.getElementById('contentArea');
+  const sidebar = document.getElementById('sidebar');
+  area.innerHTML = '';
+  sidebar.innerHTML = '';
+
+  let currentChapter = '';
+  COURSE_DATA.forEach(section => {
+    if (section.chapter !== currentChapter) {
+      currentChapter = section.chapter;
+      const h3 = document.createElement('h3');
+      h3.textContent = currentChapter;
+      sidebar.appendChild(h3);
+    }
+    const a = document.createElement('a');
+    a.href = '#' + section.id;
+    a.textContent = section.title;
+    a.setAttribute('data-id', section.id);
+    sidebar.appendChild(a);
+
+    const card = document.createElement('div');
+    card.className = 'section-card';
+    card.id = section.id;
+
+    const h2 = document.createElement('h2');
+    h2.textContent = section.title;
+    card.appendChild(h2);
+
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'content';
+
+    const segments = parseContent(section.content);
+    const paragraphs = splitIntoParagraphs(segments);
+
+    paragraphs.forEach(para => {
+      const p = document.createElement('p');
+      para.forEach(seg => {
+        if (seg.type === 'text') {
+          p.appendChild(document.createTextNode(seg.value));
+        } else {
+          const wrap = document.createElement('span');
+          wrap.className = 'cloze';
+          if (shouldBlank(seg.importance, seg.value)) {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'cloze-input';
+            input.placeholder = '…';
+            input.setAttribute('data-answer', seg.accepted.join('|'));
+            input.setAttribute('data-keyword', seg.value);
+            input.setAttribute('data-card-id', section.id);
+            if (seg.unordered) input.setAttribute('data-unordered', '1');
+            input.addEventListener('input', updateProgress);
+            wrap.appendChild(input);
+            allClozeInputs.push(input);
+          } else {
+            const span = document.createElement('span');
+            span.className = 'revealed';
+            span.textContent = seg.value;
+            wrap.appendChild(span);
+          }
+          p.appendChild(wrap);
+        }
+      });
+      contentDiv.appendChild(p);
+    });
+
+    if (section.images) {
+      section.images.forEach(img => {
+        const wrap = document.createElement('div');
+        wrap.className = 'img-wrap';
+        const el = document.createElement('img');
+        el.src = img.src;
+        el.alt = img.caption || '';
+        el.loading = 'lazy';
+        wrap.appendChild(el);
+        if (img.caption) {
+          const cap = document.createElement('div');
+          cap.className = 'caption';
+          cap.textContent = img.caption;
+          wrap.appendChild(cap);
+        }
+        contentDiv.appendChild(wrap);
+      });
+    }
+
+    const actions = document.createElement('div');
+    actions.className = 'card-actions';
+    actions.innerHTML =
+      `<button class="btn-mini check-card" onclick="checkCard('${section.id}')">✅ 检查</button>` +
+      `<button class="btn-mini answer-card" onclick="revealCard('${section.id}')">👁 答案</button>` +
+      `<button class="btn-mini edit-card" onclick="clearCard('${section.id}')">✏️ 继续</button>` +
+      `<button class="btn-mini clear-card" onclick="clearCardInputs('${section.id}')">🔄 清空</button>`;
+
+    card.appendChild(contentDiv);
+    card.appendChild(actions);
+    area.appendChild(card);
+  });
+
+  updateProgress();
+  updatePlaceholders();
+}
+
+function splitIntoParagraphs(segments) {
+  const result = [];
+  let current = [];
+  segments.forEach(seg => {
+    if (seg.type === 'text') {
+      const parts = seg.value.split('\n');
+      parts.forEach((part, i) => {
+        if (i > 0) { if (current.length > 0) { result.push(current); current = []; } }
+        if (part.trim()) current.push({ type: 'text', value: part });
+      });
+    } else { current.push(seg); }
+  });
+  if (current.length > 0) result.push(current);
+  return result;
+}
+
+function updateProgress() {
+  const total = allClozeInputs.length;
+  let filled = 0;
+  allClozeInputs.forEach(inp => { if (inp.value.trim()) filled++; });
+  const pct = total > 0 ? Math.round((filled / total) * 100) : 0;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `已填写 ${filled} / ${total}`;
+}
+
+// === Answer Matching ===
+function isAnswerMatch(inp, userAnswer) {
+  const accepted = inp.getAttribute('data-answer').split('|').map(s => s.trim());
+  const unordered = inp.hasAttribute('data-unordered');
+  if (!unordered) return accepted.some(a => userAnswer === a);
+  const norm = s => s.split(/[,，、\s]+/).map(p => p.trim()).filter(Boolean).sort().join(',');
+  return accepted.some(a => norm(a) === norm(userAnswer));
+}
+
+// === Global Check ===
+function checkAll() {
+  clearCheckState();
+  checked = true;
+  allClozeInputs.forEach(inp => {
+    const userAnswer = inp.value.trim();
+    const accepted = inp.getAttribute('data-answer').split('|').map(s => s.trim());
+    const cloze = inp.parentElement;
+    cloze.classList.remove('correct', 'incorrect', 'show-hint');
+    if (!userAnswer) {
+      cloze.classList.add('incorrect');
+      const hint = document.createElement('span'); hint.className = 'hint'; hint.textContent = accepted[0];
+      cloze.appendChild(hint); cloze.classList.add('show-hint'); return;
+    }
+    if (isAnswerMatch(inp, userAnswer)) { cloze.classList.add('correct'); }
+    else {
+      cloze.classList.add('incorrect');
+      const hint = document.createElement('span'); hint.className = 'hint'; hint.textContent = accepted[0];
+      cloze.appendChild(hint); cloze.classList.add('show-hint');
+    }
+  });
+  const firstErr = document.querySelector('.cloze.incorrect');
+  if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// === Clear Marks (global) ===
+function clearCheckState() {
+  checked = false;
+  allClozeInputs.forEach(inp => {
+    const cloze = inp.parentElement;
+    cloze.classList.remove('correct', 'incorrect', 'show-hint');
+    cloze.querySelectorAll('.hint').forEach(h => h.remove());
+  });
+}
+
+// === Per-Card Operations ===
+function getCardInputs(cardId) {
+  return allClozeInputs.filter(inp => inp.getAttribute('data-card-id') === cardId);
+}
+
+function checkCard(cardId) {
+  clearCard(cardId);
+  checked = true;
+  getCardInputs(cardId).forEach(inp => {
+    const userAnswer = inp.value.trim();
+    const accepted = inp.getAttribute('data-answer').split('|').map(s => s.trim());
+    const cloze = inp.parentElement;
+    cloze.classList.remove('correct', 'incorrect', 'show-hint');
+    if (!userAnswer) {
+      cloze.classList.add('incorrect');
+      const hint = document.createElement('span'); hint.className = 'hint'; hint.textContent = accepted[0];
+      cloze.appendChild(hint); cloze.classList.add('show-hint'); return;
+    }
+    if (isAnswerMatch(inp, userAnswer)) { cloze.classList.add('correct'); }
+    else {
+      cloze.classList.add('incorrect');
+      const hint = document.createElement('span'); hint.className = 'hint'; hint.textContent = accepted[0];
+      cloze.appendChild(hint); cloze.classList.add('show-hint');
+    }
+  });
+  const card = document.getElementById(cardId);
+  if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function revealCard(cardId) {
+  getCardInputs(cardId).forEach(inp => {
+    inp.value = inp.getAttribute('data-answer').split('|')[0].trim();
+    const cloze = inp.parentElement;
+    cloze.classList.remove('correct', 'incorrect', 'show-hint');
+    cloze.querySelectorAll('.hint').forEach(h => h.remove());
+  });
+  updateProgress();
+}
+
+function clearCard(cardId) {
+  getCardInputs(cardId).forEach(inp => {
+    const cloze = inp.parentElement;
+    cloze.classList.remove('correct', 'incorrect', 'show-hint');
+    cloze.querySelectorAll('.hint').forEach(h => h.remove());
+  });
+}
+
+function clearCardInputs(cardId) {
+  getCardInputs(cardId).forEach(inp => {
+    inp.value = '';
+    const cloze = inp.parentElement;
+    cloze.classList.remove('correct', 'incorrect', 'show-hint');
+    cloze.querySelectorAll('.hint').forEach(h => h.remove());
+  });
+  updateProgress();
+}
+
+// === Global Reveal / Reset ===
+function revealAll() {
+  allClozeInputs.forEach(inp => {
+    inp.value = inp.getAttribute('data-answer').split('|')[0].trim();
+    const cloze = inp.parentElement;
+    cloze.classList.remove('correct', 'incorrect', 'show-hint');
+  });
+  updateProgress();
+}
+
+function resetAll() {
+  allClozeInputs.forEach(inp => {
+    inp.value = '';
+    const cloze = inp.parentElement;
+    cloze.classList.remove('correct', 'incorrect', 'show-hint');
+    cloze.querySelectorAll('.hint').forEach(h => h.remove());
+  });
+  checked = false;
+  updateProgress();
+  updatePlaceholders();
+}
+
+// === Sidebar ===
+function updateActiveSidebar() {
+  const links = document.querySelectorAll('#sidebar a');
+  let currentId = '';
+  document.querySelectorAll('.section-card').forEach(card => {
+    const rect = card.getBoundingClientRect();
+    if (rect.top <= 120) currentId = card.id;
+  });
+  links.forEach(a => a.classList.toggle('active', a.getAttribute('data-id') === currentId));
+}
+
+// === INIT ===
+document.addEventListener('DOMContentLoaded', () => {
+  renderAll();
+
+  document.getElementById('intensity').addEventListener('input', () => {
+    setIntensity(parseInt(document.getElementById('intensity').value));
+    renderAll();
+  });
+
+  window.addEventListener('scroll', updateActiveSidebar);
+  updateActiveSidebar();
+
+  // Arrow-key navigation
+  document.addEventListener('keydown', (e) => {
+    const el = document.activeElement;
+    if (!el || !el.classList.contains('cloze-input')) return;
+    let idx = allClozeInputs.indexOf(el);
+    if (idx === -1) return;
+    let nextIdx = -1;
+    switch (e.key) {
+      case 'ArrowDown': case 'ArrowRight': case 'Enter':
+        e.preventDefault(); nextIdx = idx + 1; break;
+      case 'ArrowUp': case 'ArrowLeft':
+        e.preventDefault(); nextIdx = idx - 1; break;
+      case 'Tab': return;
+      default: return;
+    }
+    if (nextIdx >= 0 && nextIdx < allClozeInputs.length) {
+      allClozeInputs[nextIdx].focus();
+      allClozeInputs[nextIdx].select();
+    }
+  });
+
+  // Auto-clear hint on focus after checking
+  document.addEventListener('focusin', (e) => {
+    if (!checked) return;
+    const el = e.target;
+    if (!el.classList.contains('cloze-input')) return;
+    const cloze = el.parentElement;
+    cloze.classList.remove('correct', 'incorrect', 'show-hint');
+    cloze.querySelectorAll('.hint').forEach(h => h.remove());
+  });
+});
+</script>
+</body>
+</html>
