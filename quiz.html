@@ -145,7 +145,35 @@ const QUESTIONS = [
   { id: 'q21', type: 'mcq', group: 'fpga', text: '时钟不确定性主要包括哪两类？', options: ['jitter 与 skew', 'setup 与 hold', 'CLB 与 IOB', 'DRC 与 LVS'], answer: 0, explanation: '时钟不确定性包括时钟抖动 jitter 和时钟偏斜 skew。' },
   { id: 'q22', type: 'tf', group: 'fpga', text: 'set_clock_uncertainty 可用于描述时钟抖动与时钟偏斜等不确定性。', answer: true, explanation: '提纲中指出可使用 set_clock_uncertainty 描述 uncertainty。' },
   { id: 'q23', type: 'mcq', group: 'fpga', text: '在 STA 建立时间分析中，数据到达时间通常表示为？', options: ['Tlaunch + Tck2q + Tdp', 'Tcapture + Thold', 'VDD + GND', 'jitter + skew'], answer: 0, explanation: '数据到达时间 Ta = Tlaunch + Tck2q + Tdp。' },
-  { id: 'q24', type: 'tf', group: 'fpga', text: '资源共享可以减少重复加法器、减小面积，但共享节点扇出增大可能带来额外延时。', answer: true, explanation: '这是资源共享综合结果的典型优缺点。' }
+  { id: 'q24', type: 'tf', group: 'fpga', text: '资源共享可以减少重复加法器、减小面积，但共享节点扇出增大可能带来额外延时。', answer: true, explanation: '这是资源共享综合结果的典型优缺点。' },
+
+  { id: 'q25', type: 'mcq', group: 'pcb', text: 'PCB 术语中，“用于连接和焊接元件的一种导电图形”指的是？', options: ['丝印层', '焊盘', '阻焊图', '机械层'], answer: 1, explanation: '焊盘用于连接和焊接元件。' },
+  { id: 'q26', type: 'tf', group: 'pcb', text: '丝印层主要用于印刷元器件标号、名称等字符。', answer: true, explanation: '丝印层用于标注元器件编号、名称等信息。' },
+  { id: 'q27', type: 'mcq', group: 'pcb', text: '多层 PCB 生产流程中，钻孔之后通常需要进行哪一步以实现孔壁导电？', options: ['阻焊', '电镀', '包装', 'FQA'], answer: 1, explanation: '钻孔后通过电镀等工艺使孔壁金属化，实现层间互连。' },
+  { id: 'q28', type: 'tf', group: 'pcb', text: '相邻两层 PCB 走线平行更有利于减少寄生耦合。', answer: false, explanation: '相邻层走线应尽量互相垂直，平行容易产生寄生耦合。' },
+  { id: 'q29', type: 'mcq', group: 'pcb', text: '下列哪项属于 PCB 按孔导通状态分类？', options: ['软硬结合板', '埋孔板', '沉金板', '军事板'], answer: 1, explanation: '按孔的导通状态可分为埋孔板、盲孔板、通孔板。' },
+  { id: 'q30', type: 'tf', group: 'pcb', text: '同类型插装元器件在 X 或 Y 方向上应尽量朝同一个方向放置。', answer: true, explanation: '这样有利于装配、焊接和版面一致性。' },
+  { id: 'q31', type: 'mcq', group: 'pcb', text: '用于阻抗匹配目的的串联匹配电阻应靠近哪里放置？', options: ['信号接收端', '信号驱动端', '电源入口', '板框边缘'], answer: 1, explanation: '串联匹配电阻靠近信号驱动端，负载匹配电阻靠近接收端。' },
+  { id: 'q32', type: 'tf', group: 'pcb', text: '数字电流不应流经模拟器件，高速电流不应流经低速器件。', answer: true, explanation: '这是提纲中标红强调的布局原则。' },
+  { id: 'q33', type: 'mcq', group: 'pcb', text: '关键信号线预留测试点的主要目的是什么？', options: ['增加线长', '方便生产和维修检测', '增大寄生电容', '替代地线'], answer: 1, explanation: '测试点方便生产调试和维修检测。' },
+  { id: 'q34', type: 'tf', group: 'pcb', text: '差分线设计时应尽量等长。', answer: true, explanation: '差分线等长可以减小时序偏差和信号失配。' },
+  { id: 'q35', type: 'mcq', group: 'pcb', text: '电子系统接地的作用不包括下列哪项？', options: ['保护人身安全', '提供信号参考地', '解决电磁兼容问题', '强制提高所有芯片主频'], answer: 3, explanation: '接地不能强制提高芯片主频。' },
+  { id: 'q36', type: 'tf', group: 'pcb', text: '如果模拟地和数字地混在一起，数字噪声可能影响模拟信号。', answer: true, explanation: '数字信号能量高、频谱宽，数字地噪声会影响模拟部分。' },
+
+  { id: 'q37', type: 'mcq', group: 'fpga', text: 'Top-Down 流程中，系统层主要确定什么？', options: ['系统设计的功能和指标', '版图验证规则', '焊盘尺寸', 'PCB 表面处理方式'], answer: 0, explanation: '系统层确定系统设计的功能和指标。' },
+  { id: 'q38', type: 'tf', group: 'fpga', text: '寄存器传输层主要进行设计输入和 RTL 级模型建立。', answer: true, explanation: '这是 Top-Down 流程中的 RTL 层工作。' },
+  { id: 'q39', type: 'mcq', group: 'fpga', text: '在 Top-Down 流程中，生成门级网表和测试图形通常属于哪个阶段？', options: ['系统层', '算法层', '逻辑、电路层', '包装阶段'], answer: 2, explanation: '逻辑、电路层进行逻辑综合和可测性设计，生成门级网表和测试图形。' },
+  { id: 'q40', type: 'tf', group: 'fpga', text: '版图验证阶段通常包括 DRC、ERC、LVS 等检查。', answer: true, explanation: 'DRC/ERC/LVS 是后端版图验证中的常见检查。' },
+  { id: 'q41', type: 'mcq', group: 'fpga', text: '建立时间约束可表示为？', options: ['Tr - Ta = Tmargin ≥ 0', 'Ta - Tr = Tmargin ≥ 0', 'jitter + skew = 0', 'VDD - GND = 0'], answer: 0, explanation: '建立时间分析中要求时间减去到达时间应大于等于 0。' },
+  { id: 'q42', type: 'mcq', group: 'fpga', text: '保持时间约束可表示为？', options: ['Tr - Ta = Tmargin ≥ 0', 'Ta - Tr = Tmargin ≥ 0', 'Tsetup + Thold = 0', 'Tclk = Tdp'], answer: 1, explanation: '保持时间分析中到达时间减去要求时间应大于等于 0。' },
+  { id: 'q43', type: 'tf', group: 'fpga', text: 'Tck2q 表示触发器 CK 到 Q 的传输时间。', answer: true, explanation: 'Tck2q 由触发器内部电路延迟产生。' },
+  { id: 'q44', type: 'mcq', group: 'fpga', text: 'Tdp 在 STA 中主要由什么产生？', options: ['门电路延迟和互连线延迟', '显示器刷新率', '键盘输入延迟', '电池容量'], answer: 0, explanation: 'Tdp 是组合逻辑路径延时，来自门电路和互连线。' },
+  { id: 'q45', type: 'tf', group: 'fpga', text: '静态时序分析可以同时进行功能仿真。', answer: false, explanation: 'STA 的缺点之一是不能同时进行功能仿真。' },
+  { id: 'q46', type: 'mcq', group: 'fpga', text: '逻辑综合中，提取公共项的潜在缺点是什么？', options: ['一定增加门数', '公共项节点扇出增大可能带来额外延时', '无法生成电路', '只能用于模拟电路'], answer: 1, explanation: '公共节点驱动多路后级逻辑时扇出增大，可能影响延时。' },
+  { id: 'q47', type: 'tf', group: 'fpga', text: '延时约束下的综合可将晚到达信号放在靠近输出端的位置以优化关键路径。', answer: true, explanation: '这是延时约束优化的典型策略。' },
+  { id: 'q48', type: 'mcq', group: 'fpga', text: 'FPGA 设计中的环境约束通常包括哪些内容？', options: ['电压、温度、负载和驱动', '字体、颜色、布局', '开料、钻孔、阻焊', '民用、工业、军事'], answer: 0, explanation: '环境约束针对芯片工作环境，包括电压、温度、负载、驱动等。' },
+  { id: 'q49', type: 'tf', group: 'fpga', text: '时钟偏斜 skew 指同一时钟信号到达不同触发器或位置时产生的时间差。', answer: true, explanation: '这是 skew 的定义。' },
+  { id: 'q50', type: 'mcq', group: 'fpga', text: '时钟抖动 jitter 指什么？', options: ['时钟边沿相对于理想时钟边沿的时间波动', '不同版图层之间的金属连接', '输出电压的平均值', 'PCB 表面镀层厚度'], answer: 0, explanation: 'jitter 是时钟边沿相对理想边沿的时间波动。' }
 ];
 
 let activeFilter = 'all';
