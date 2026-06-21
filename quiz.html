@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>可编程系统设计题库练习</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  min-height: 100vh;
+  font-family: "Songti SC", "Noto Serif SC", "STSong", serif;
+  color: #2e261d;
+  background:
+    radial-gradient(circle at 18% 8%, rgba(197,128,51,0.20), transparent 32%),
+    radial-gradient(circle at 90% 12%, rgba(58,93,133,0.16), transparent 34%),
+    linear-gradient(135deg, #f7f1e8 0%, #efe5d7 45%, #f9f6ef 100%);
+}
+.shell { width: min(1160px, calc(100% - 32px)); margin: 0 auto; padding: 30px 0 56px; }
+.hero {
+  position: sticky; top: 0; z-index: 20;
+  padding: 18px 0 20px;
+  backdrop-filter: blur(22px);
+  background: linear-gradient(180deg, rgba(247,241,232,0.94), rgba(247,241,232,0.74));
+  border-bottom: 1px solid rgba(91,73,52,0.12);
+}
+.hero-inner { width: min(1160px, calc(100% - 32px)); margin: 0 auto; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.brand { flex: 1; min-width: 260px; }
+.eyebrow { font-size: 0.78rem; letter-spacing: 0.14em; color: #a06a2e; font-weight: 700; }
+h1 { font-size: clamp(1.45rem, 3vw, 2.4rem); line-height: 1.2; margin-top: 4px; }
+.subtitle { color: #7a6a58; font-size: 0.92rem; margin-top: 6px; }
+.nav-link, .btn {
+  border: 1px solid rgba(91,73,52,0.18); background: rgba(255,255,255,0.48); color: #4b3d2d;
+  border-radius: 999px; padding: 9px 16px; font-family: inherit; font-weight: 700; cursor: pointer;
+  text-decoration: none; transition: transform 0.18s, background 0.18s, box-shadow 0.18s;
+}
+.nav-link:hover, .btn:hover { transform: translateY(-1px); background: rgba(255,255,255,0.82); box-shadow: 0 8px 22px rgba(91,73,52,0.10); }
+.btn.primary { background: #b87535; color: #fff; border-color: #b87535; }
+.btn.primary:hover { background: #9f622b; }
+.toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 24px 0 18px; }
+.filter { padding: 8px 14px; border-radius: 999px; border: 1px solid #d6c8b7; background: rgba(255,255,255,0.55); cursor: pointer; font-family: inherit; }
+.filter.active { background: #2f4d68; color: #fff; border-color: #2f4d68; }
+.stats {
+  display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin: 18px 0 22px;
+}
+.stat-card {
+  background: rgba(255,255,255,0.56); border: 1px solid rgba(91,73,52,0.12); border-radius: 18px; padding: 16px;
+  box-shadow: 0 8px 28px rgba(91,73,52,0.06);
+}
+.stat-card span { display: block; color: #8a7a67; font-size: 0.78rem; }
+.stat-card strong { font-size: 1.45rem; }
+.questions { display: grid; gap: 16px; }
+.question {
+  position: relative; overflow: hidden;
+  background: rgba(255,255,255,0.72); border: 1px solid rgba(91,73,52,0.12); border-radius: 22px;
+  padding: 22px; box-shadow: 0 14px 38px rgba(91,73,52,0.07);
+}
+.question::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4px; background: linear-gradient(90deg, #b87535, #2f4d68); opacity: 0.72; }
+.q-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+.tag { font-size: 0.75rem; border-radius: 999px; padding: 4px 10px; background: #efe4d6; color: #80552b; font-weight: 700; white-space: nowrap; }
+.tag.tf { background: #e8f0f7; color: #2f4d68; }
+.q-title { font-size: 1.05rem; font-weight: 800; line-height: 1.7; }
+.options { display: grid; gap: 10px; margin-top: 12px; }
+.option {
+  display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 14px;
+  border: 1px solid #e2d7c9; background: #fffaf3; cursor: pointer;
+}
+.option input { transform: scale(1.15); accent-color: #b87535; }
+.option:hover { border-color: #b87535; }
+.tf-row { display: flex; gap: 10px; margin-top: 12px; }
+.tf-choice { flex: 1; text-align: center; padding: 10px 12px; border-radius: 14px; border: 1px solid #e2d7c9; background: #fffaf3; cursor: pointer; font-weight: 800; }
+.tf-choice input { display: none; }
+.tf-choice:has(input:checked), .option:has(input:checked) { background: #fff2df; border-color: #b87535; }
+.feedback { display: none; margin-top: 14px; padding: 12px 14px; border-radius: 14px; font-size: 0.92rem; }
+.question.correct .feedback, .question.incorrect .feedback { display: block; }
+.question.correct .feedback { background: #edf8ef; color: #246632; border: 1px solid #b9dfc1; }
+.question.incorrect .feedback { background: #fff0ee; color: #9f332a; border: 1px solid #efc0bb; }
+.question.correct { outline: 2px solid rgba(74,158,92,0.24); }
+.question.incorrect { outline: 2px solid rgba(209,69,59,0.22); }
+.explanation { margin-top: 6px; color: inherit; opacity: 0.86; }
+@media (max-width: 720px) {
+  .stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .hero-inner { align-items: flex-start; }
+  .tf-row { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="hero-inner">
+    <div class="brand">
+      <div class="eyebrow">QUIZ MODE</div>
+      <h1>判断题与选择题练习</h1>
+      <p class="subtitle">题目来自《可编程系统设计复习提纲》，适合考前快速自测。</p>
+    </div>
+    <a class="nav-link" href="index.html">← 返回挖空背诵</a>
+    <button class="btn primary" onclick="checkQuiz()">提交检查</button>
+    <button class="btn" onclick="revealQuiz()">显示答案</button>
+    <button class="btn" onclick="resetQuiz()">重做</button>
+  </div>
+</header>
+
+<main class="shell">
+  <div class="toolbar">
+    <button class="filter active" data-filter="all" onclick="setFilter('all')">全部</button>
+    <button class="filter" data-filter="mcq" onclick="setFilter('mcq')">选择题</button>
+    <button class="filter" data-filter="tf" onclick="setFilter('tf')">判断题</button>
+    <button class="filter" data-filter="pcb" onclick="setFilter('pcb')">电子系统/PCB</button>
+    <button class="filter" data-filter="fpga" onclick="setFilter('fpga')">FPGA</button>
+  </div>
+
+  <section class="stats">
+    <div class="stat-card"><span>总题数</span><strong id="totalCount">0</strong></div>
+    <div class="stat-card"><span>已作答</span><strong id="answeredCount">0</strong></div>
+    <div class="stat-card"><span>正确</span><strong id="correctCount">0</strong></div>
+    <div class="stat-card"><span>正确率</span><strong id="scoreRate">0%</strong></div>
+  </section>
+
+  <section class="questions" id="questions"></section>
+</main>
+
+<script>
+const QUESTIONS = [
+  { id: 'q1', type: 'tf', group: 'pcb', text: '电子系统是由电子元器件或部件组成，能够产生、传输、采集或处理电信号及信息的客观实体。', answer: true, explanation: '这是电子系统的定义。' },
+  { id: 'q2', type: 'tf', group: 'pcb', text: '印制线路板英文为 Printed Circuit Board，缩写为 PCB。', answer: true, explanation: 'PCB 即 Printed Circuit Board。' },
+  { id: 'q3', type: 'tf', group: 'pcb', text: '印制电路概念于 1960 年由 Eisler 博士提出。', answer: false, explanation: '应为 1936 年由英国 Eisler 博士提出。' },
+  { id: 'q4', type: 'mcq', group: 'pcb', text: '常用 FR-4 覆铜板通常由哪些部分组成？', options: ['硅片、铝线、封装胶', '玻璃纤维布、环氧树脂、铜箔、填料', '陶瓷、金属壳、焊锡', '铝板、导热硅脂、屏蔽罩'], answer: 1, explanation: 'FR-4 常见组成包括玻璃纤维布、环氧树脂、铜箔、填料。' },
+  { id: 'q5', type: 'mcq', group: 'pcb', text: 'PCB 按结构分类不包括以下哪一项？', options: ['单面板', '双面板', '多层板', '喷锡板'], answer: 3, explanation: '喷锡板属于按表面制作分类。' },
+  { id: 'q6', type: 'tf', group: 'pcb', text: 'PCB 布局应尽量使模拟信号与数字信号分开，高频信号与低频信号分开。', answer: true, explanation: '这是布局原则中的重要要求。' },
+  { id: 'q7', type: 'mcq', group: 'pcb', text: '转角处推荐采用哪种布线方式以减小高频信号辐射和波形畸变？', options: ['90°折线', '45°折线或弧线', '任意锐角', '蛇形线越多越好'], answer: 1, explanation: '转角处采用 45°折线或弧线，不可使用 90°折线。' },
+  { id: 'q8', type: 'tf', group: 'pcb', text: '开关电源通常效率高、功率大，但噪声纹波较大。', answer: true, explanation: '开关电源的典型特点：效率高、功率大、纹波噪声大。' },
+  { id: 'q9', type: 'mcq', group: 'pcb', text: '数字地和模拟地在 PCB 设计中通常应如何处理？', options: ['完全混在一起', '分开处理并单点连接', '只保留数字地', '只保留模拟地'], answer: 1, explanation: '模拟地和数字地要分开处理，单点接在一起。' },
+  { id: 'q10', type: 'tf', group: 'pcb', text: '去耦电容应尽量远离芯片电源管脚，以减少干扰。', answer: false, explanation: '去耦电容应尽量靠近芯片电源管脚，并使回路最短。' },
+
+  { id: 'q11', type: 'mcq', group: 'fpga', text: 'FPGA 内部主要构成单元不包括以下哪项？', options: ['CLB', 'IOB', '连接资源', '光学镜头'], answer: 3, explanation: 'FPGA 主要包括 CLB、IOB、连接资源和硬核等。' },
+  { id: 'q12', type: 'tf', group: 'fpga', text: '集成电路层次化设计包括系统层、算法层、寄存器传输层、逻辑层、电路层和版图层。', answer: true, explanation: '这是提纲中列出的六个层次。' },
+  { id: 'q13', type: 'mcq', group: 'fpga', text: 'HDL 主要包括哪两种语言？', options: ['Python 与 C++', 'VHDL 与 Verilog HDL', 'HTML 与 CSS', 'SPICE 与 MATLAB'], answer: 1, explanation: '硬件描述语言主要有 VHDL 和 Verilog HDL。' },
+  { id: 'q14', type: 'tf', group: 'fpga', text: '图形描述方式直观易懂，但通用性和可移植性较差。', answer: true, explanation: '图形描述方式受工艺库、逻辑宏单元限制。' },
+  { id: 'q15', type: 'mcq', group: 'fpga', text: 'Top-Down 流程最终完成什么？', options: ['系统版图数据提交（Tape out）', '只完成算法仿真', '只完成需求文档', '只完成器件购买'], answer: 0, explanation: '自顶向下流程最终完成系统版图数据提交（Tape out）。' },
+  { id: 'q16', type: 'tf', group: 'fpga', text: '动态时序仿真可以同时进行功能仿真和时序仿真，但测试向量构造工作量大。', answer: true, explanation: '动态时序仿真的优缺点正是如此。' },
+  { id: 'q17', type: 'mcq', group: 'fpga', text: '静态时序分析（STA）的一个主要优点是？', options: ['必须穷举外加测试激励', '无需外加测试激励且运行速度快', '只能检查功能正确性', '不适用于大规模电路'], answer: 1, explanation: 'STA 无需外加测试激励，速度快，占用内存小。' },
+  { id: 'q18', type: 'tf', group: 'fpga', text: '建立时间是指时钟有效沿之后，数据输入端必须保持稳定的最短时间。', answer: false, explanation: '建立时间是在时钟有效沿之前；保持时间才是在之后。' },
+  { id: 'q19', type: 'mcq', group: 'fpga', text: '逻辑综合工具输入的三种信息是？', options: ['RTL级描述、约束条件、工艺库', '图片、音频、视频', '键盘、鼠标、显示器', '电源线、地线、信号线'], answer: 0, explanation: '逻辑综合输入包括 RTL 级描述、约束条件、工艺库。' },
+  { id: 'q20', type: 'tf', group: 'fpga', text: '面积约束和延时约束通常是相互矛盾的关系。', answer: true, explanation: '减小延时往往需要更多硬件资源，可能增加面积。' },
+  { id: 'q21', type: 'mcq', group: 'fpga', text: '时钟不确定性主要包括哪两类？', options: ['jitter 与 skew', 'setup 与 hold', 'CLB 与 IOB', 'DRC 与 LVS'], answer: 0, explanation: '时钟不确定性包括时钟抖动 jitter 和时钟偏斜 skew。' },
+  { id: 'q22', type: 'tf', group: 'fpga', text: 'set_clock_uncertainty 可用于描述时钟抖动与时钟偏斜等不确定性。', answer: true, explanation: '提纲中指出可使用 set_clock_uncertainty 描述 uncertainty。' },
+  { id: 'q23', type: 'mcq', group: 'fpga', text: '在 STA 建立时间分析中，数据到达时间通常表示为？', options: ['Tlaunch + Tck2q + Tdp', 'Tcapture + Thold', 'VDD + GND', 'jitter + skew'], answer: 0, explanation: '数据到达时间 Ta = Tlaunch + Tck2q + Tdp。' },
+  { id: 'q24', type: 'tf', group: 'fpga', text: '资源共享可以减少重复加法器、减小面积，但共享节点扇出增大可能带来额外延时。', answer: true, explanation: '这是资源共享综合结果的典型优缺点。' }
+];
+
+let activeFilter = 'all';
+
+function visibleQuestions() {
+  if (activeFilter === 'all') return QUESTIONS;
+  return QUESTIONS.filter(q => q.type === activeFilter || q.group === activeFilter);
+}
+
+function renderQuestions() {
+  const root = document.getElementById('questions');
+  root.innerHTML = '';
+  visibleQuestions().forEach((q, index) => {
+    const card = document.createElement('article');
+    card.className = 'question';
+    card.id = q.id;
+    card.dataset.type = q.type;
+    card.innerHTML = `
+      <div class="q-head">
+        <div class="q-title">${index + 1}. ${q.text}</div>
+        <span class="tag ${q.type === 'tf' ? 'tf' : ''}">${q.type === 'tf' ? '判断题' : '选择题'} · ${q.group.toUpperCase()}</span>
+      </div>
+      ${q.type === 'tf' ? renderTrueFalse(q) : renderOptions(q)}
+      <div class="feedback"><strong></strong><div class="explanation"></div></div>
+    `;
+    root.appendChild(card);
+  });
+  updateStats();
+}
+
+function renderTrueFalse(q) {
+  return `<div class="tf-row">
+    <label class="tf-choice"><input type="radio" name="${q.id}" value="true" onchange="updateStats()"> 正确</label>
+    <label class="tf-choice"><input type="radio" name="${q.id}" value="false" onchange="updateStats()"> 错误</label>
+  </div>`;
+}
+
+function renderOptions(q) {
+  return `<div class="options">${q.options.map((op, i) => `
+    <label class="option"><input type="radio" name="${q.id}" value="${i}" onchange="updateStats()"><span>${String.fromCharCode(65+i)}. ${op}</span></label>
+  `).join('')}</div>`;
+}
+
+function getSelected(q) {
+  const selected = document.querySelector(`input[name="${q.id}"]:checked`);
+  if (!selected) return null;
+  return q.type === 'tf' ? selected.value === 'true' : Number(selected.value);
+}
+
+function isCorrect(q) { return getSelected(q) === q.answer; }
+
+function checkQuiz() {
+  let firstWrong = null;
+  visibleQuestions().forEach(q => {
+    const card = document.getElementById(q.id);
+    const selected = getSelected(q);
+    card.classList.remove('correct', 'incorrect');
+    if (selected === null || selected !== q.answer) {
+      card.classList.add('incorrect');
+      if (!firstWrong) firstWrong = card;
+    } else card.classList.add('correct');
+    const feedback = card.querySelector('.feedback');
+    feedback.querySelector('strong').textContent = selected === q.answer ? '回答正确' : `正确答案：${formatAnswer(q)}`;
+    feedback.querySelector('.explanation').textContent = q.explanation;
+  });
+  updateStats();
+  if (firstWrong) firstWrong.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function formatAnswer(q) { return q.type === 'tf' ? (q.answer ? '正确' : '错误') : `${String.fromCharCode(65 + q.answer)}. ${q.options[q.answer]}`; }
+
+function revealQuiz() {
+  visibleQuestions().forEach(q => {
+    const value = q.type === 'tf' ? String(q.answer) : String(q.answer);
+    const input = document.querySelector(`input[name="${q.id}"][value="${value}"]`);
+    if (input) input.checked = true;
+  });
+  checkQuiz();
+}
+
+function resetQuiz() {
+  visibleQuestions().forEach(q => {
+    document.querySelectorAll(`input[name="${q.id}"]`).forEach(i => i.checked = false);
+    const card = document.getElementById(q.id);
+    if (card) card.classList.remove('correct', 'incorrect');
+  });
+  updateStats();
+}
+
+function updateStats() {
+  const qs = visibleQuestions();
+  const answered = qs.filter(q => getSelected(q) !== null).length;
+  const correct = qs.filter(q => getSelected(q) !== null && isCorrect(q)).length;
+  document.getElementById('totalCount').textContent = qs.length;
+  document.getElementById('answeredCount').textContent = answered;
+  document.getElementById('correctCount').textContent = correct;
+  document.getElementById('scoreRate').textContent = answered ? Math.round(correct / answered * 100) + '%' : '0%';
+}
+
+function setFilter(filter) {
+  activeFilter = filter;
+  document.querySelectorAll('.filter').forEach(b => b.classList.toggle('active', b.dataset.filter === filter));
+  renderQuestions();
+}
+
+document.addEventListener('DOMContentLoaded', renderQuestions);
+</script>
+</body>
+</html>

@@ -240,6 +240,7 @@ body {
     <button class="btn-hint" data-mode="length" onclick="setHintMode('length')">字数</button>
   </span>
   <button class="btn-hint" id="randomToggle" onclick="toggleRandomMode()">🎲 随机</button>
+  <button class="btn-hint" onclick="location.href='quiz.html'">📝 题库</button>
   <button class="btn btn-check" onclick="checkAll()">✅ 检查答案</button>
   <button class="btn btn-edit" onclick="clearCheckState()">✏️ 继续编辑</button>
   <button class="btn btn-reveal" onclick="revealAll()">👁 显示答案</button>
@@ -358,8 +359,7 @@ const COURSE_DATA = [
   },
   {
     id: 'fpga-4-flowchart', chapter: 'FPGA', title: '4-补充、框图流程挖空：集成电路自顶向下流程',
-    content: '按图中从上到下的流程背诵：\n1. {系统层} → {确定系统设计的功能和指标}，右侧说明为{确定系统设计的功能和指标}。\n2. {算法层} → {系统分析，确定系统设计规范}，右侧说明为{确定行为级模型和系统时序}。\n3. {寄存器传输层} → {设计输入，RTL级模型建立}，右侧说明为{完成可综合HDL代码、原理图等设计}。\n4. 进入功能验证阶段：{系统功能仿真}，右侧说明为{完成系统功能验证}。\n5. {逻辑、电路层} → {逻辑综合和可测性设计}，右侧说明为{生成门级网表和测试图形}。\n6. 综合后优化阶段：{时序分析、功耗优化和形式验证}，右侧说明为{完成综合后仿真、验证、优化}。\n7. {版图层}前期：{版图预布局布线、时钟树建立}，右侧说明为{完成后端初步设计}。\n8. 版图实现阶段：{版图设计}，右侧说明为{完成布局和布线设计}。\n9. 后端验证阶段：{参数提前、时序验证和形式验证}，右侧说明为{完成后端设计仿真与验证}。\n10. 版图检查阶段：{版图验证}，右侧说明为{完成DRC、ERC、LVS等}。\n11. 最终输出：{系统版图数据提交(Tape out)}。',
-    images: [{ src: 'images/fig-fpga-topdown-flow-03.png', caption: '用于对照的集成电路自顶向下（Top-Down）流程图' }]
+    content: '按图中从上到下的流程背诵：\n1. {系统层} → {确定系统设计的功能和指标}，右侧说明为{确定系统设计的功能和指标}。\n2. {算法层} → {系统分析，确定系统设计规范}，右侧说明为{确定行为级模型和系统时序}。\n3. {寄存器传输层} → {设计输入，RTL级模型建立}，右侧说明为{完成可综合HDL代码、原理图等设计}。\n4. 进入功能验证阶段：{系统功能仿真}，右侧说明为{完成系统功能验证}。\n5. {逻辑、电路层} → {逻辑综合和可测性设计}，右侧说明为{生成门级网表和测试图形}。\n6. 综合后优化阶段：{时序分析、功耗优化和形式验证}，右侧说明为{完成综合后仿真、验证、优化}。\n7. {版图层}前期：{版图预布局布线、时钟树建立}，右侧说明为{完成后端初步设计}。\n8. 版图实现阶段：{版图设计}，右侧说明为{完成布局和布线设计}。\n9. 后端验证阶段：{参数提前、时序验证和形式验证}，右侧说明为{完成后端设计仿真与验证}。\n10. 版图检查阶段：{版图验证}，右侧说明为{完成DRC、ERC、LVS等}。\n11. 最终输出：{系统版图数据提交(Tape out)}。'
   },
   {
     id: 'fpga-5', chapter: 'FPGA', title: '5、集成电路设计输入的图形描述方式特点',
