@@ -173,7 +173,39 @@ const QUESTIONS = [
   { id: 'q47', type: 'tf', group: 'fpga', text: '延时约束下的综合可将晚到达信号放在靠近输出端的位置以优化关键路径。', answer: true, explanation: '这是延时约束优化的典型策略。' },
   { id: 'q48', type: 'mcq', group: 'fpga', text: 'FPGA 设计中的环境约束通常包括哪些内容？', options: ['电压、温度、负载和驱动', '字体、颜色、布局', '开料、钻孔、阻焊', '民用、工业、军事'], answer: 0, explanation: '环境约束针对芯片工作环境，包括电压、温度、负载、驱动等。' },
   { id: 'q49', type: 'tf', group: 'fpga', text: '时钟偏斜 skew 指同一时钟信号到达不同触发器或位置时产生的时间差。', answer: true, explanation: '这是 skew 的定义。' },
-  { id: 'q50', type: 'mcq', group: 'fpga', text: '时钟抖动 jitter 指什么？', options: ['时钟边沿相对于理想时钟边沿的时间波动', '不同版图层之间的金属连接', '输出电压的平均值', 'PCB 表面镀层厚度'], answer: 0, explanation: 'jitter 是时钟边沿相对理想边沿的时间波动。' }
+  { id: 'q50', type: 'mcq', group: 'fpga', text: '时钟抖动 jitter 指什么？', options: ['时钟边沿相对于理想时钟边沿的时间波动', '不同版图层之间的金属连接', '输出电压的平均值', 'PCB 表面镀层厚度'], answer: 0, explanation: 'jitter 是时钟边沿相对理想边沿的时间波动。' },
+
+  { id: 'q51', type: 'mcq', group: 'pcb', text: 'PCB 按用途分类包括哪些？', options: ['民用、工业、军事', '硬板、软板、软硬结合板', '喷锡板、沉金板、镀金板', '埋孔板、盲孔板、通孔板'], answer: 0, explanation: '按用途分为民用、工业、军事。' },
+  { id: 'q52', type: 'tf', group: 'pcb', text: 'PCB 按硬度性能可分为硬板、软板、软硬结合板。', answer: true, explanation: '这是按硬度性能的分类。' },
+  { id: 'q53', type: 'mcq', group: 'pcb', text: '下列哪项属于 PCB 表面制作分类？', options: ['单面板', '盲孔板', '沉银板', '玻璃纤维布'], answer: 2, explanation: '沉银板属于按表面制作分类。' },
+  { id: 'q54', type: 'tf', group: 'pcb', text: '金属化孔的孔壁沉积有金属，用于层间导电图形连接。', answer: true, explanation: '金属化孔也称通孔，孔壁有金属。' },
+  { id: 'q55', type: 'mcq', group: 'pcb', text: '阻焊图的主要作用是？', options: ['让所有导线都被焊锡覆盖', '防止不需要焊接的印刷导线被焊接', '增加芯片频率', '替代电源层'], answer: 1, explanation: '阻焊图用于防止不需要焊接的印刷导线被焊接。' },
+  { id: 'q56', type: 'tf', group: 'pcb', text: 'PCB 布局时，总的连线应尽可能短，关键信号线应最短。', answer: true, explanation: '这是布局原则中的基本要求。' },
+  { id: 'q57', type: 'mcq', group: 'pcb', text: '温度敏感器件在布局中应如何处理？', options: ['靠近发热量大的器件', '远离发热量大的元器件', '放在电源入口处', '必须放在板边'], answer: 1, explanation: '温度敏感器件应远离发热量大的元器件。' },
+  { id: 'q58', type: 'tf', group: 'pcb', text: '元器件排列应便于调试和维修，需调试元器件周围应有足够空间。', answer: true, explanation: '便于调试和维修是布局原则之一。' },
+  { id: 'q59', type: 'mcq', group: 'pcb', text: '布线完成后，对未布线区域进行地线填充的主要目的是什么？', options: ['作为大面积铜层地线', '让信号线更长', '取消电源层', '制造更多环路'], answer: 0, explanation: '大面积铜层可作为地线，有利于接地和屏蔽。' },
+  { id: 'q60', type: 'tf', group: 'pcb', text: '重要的模拟、高频信号可考虑用线缆连接。', answer: true, explanation: '这是 PCB 布线原则中的一条。' },
+  { id: 'q61', type: 'mcq', group: 'pcb', text: '线性电源的典型特点是？', options: ['效率高、功率大、纹波大', '效率低、功率有限、噪声纹波小', '必须使用多层板', '输出无法调节'], answer: 1, explanation: '线性电源效率低、功率有限，但噪声纹波小。' },
+  { id: 'q62', type: 'tf', group: 'pcb', text: '多电源系统无需独立规划，只要最后接在一起即可。', answer: false, explanation: '多电源系统需独立规划，并综合考虑功耗和噪声干扰。' },
+  { id: 'q63', type: 'mcq', group: 'pcb', text: '电子通信设备之间信号互连时通常需要什么作为参考？', options: ['统一的信号参考地', '随机噪声源', '任意未连接金属', '机械外壳颜色'], answer: 0, explanation: '设备之间信号互连要求有基准地作为信号参考地。' },
+  { id: 'q64', type: 'tf', group: 'pcb', text: '数字信号通常能量高、频谱宽，会在数字地上引起较大噪声。', answer: true, explanation: '这是数字地和模拟地需要分开处理的重要原因。' },
+
+  { id: 'q65', type: 'mcq', group: 'fpga', text: 'FPGA 连接资源中通常包括哪些？', options: ['短线、长线、时钟网络、直接连接', '喷锡、沉金、沉银', '焊盘、阻焊、丝印', '雷达、电源、通信'], answer: 0, explanation: 'FPGA 连接资源包括短线、长线、时钟网络、直接连接等。' },
+  { id: 'q66', type: 'tf', group: 'fpga', text: 'FPGA 硬核资源可包括块存储、乘法器、时钟管理等。', answer: true, explanation: '这些是 FPGA 中常见硬核资源。' },
+  { id: 'q67', type: 'mcq', group: 'fpga', text: '文字描述方式相比图形描述方式更适合描述什么？', options: ['复杂行为', 'PCB 板框颜色', '元件外壳材质', '印制板表面镀层'], answer: 0, explanation: '文字描述方式适合描述复杂行为。' },
+  { id: 'q68', type: 'tf', group: 'fpga', text: '图形描述方式适合描述器件内部互连关系，即结构。', answer: true, explanation: '图形方式适合描述结构和内部互连关系。' },
+  { id: 'q69', type: 'mcq', group: 'fpga', text: '逻辑仿真中，利用输入激励模拟确定什么？', options: ['电路响应', 'PCB 板厚', '铜箔重量', '封装颜色'], answer: 0, explanation: '逻辑仿真给定输入激励，模拟确定电路响应。' },
+  { id: 'q70', type: 'tf', group: 'fpga', text: '逻辑仿真可分为功能块级、逻辑门级、开关级等不同层次。', answer: true, explanation: '这是提纲中的逻辑仿真分类。' },
+  { id: 'q71', type: 'mcq', group: 'fpga', text: 'STA 不能同时进行哪类仿真？', options: ['功能仿真', '路径延时分析', '关键路径查找', '建立/保持检查'], answer: 0, explanation: '静态时序分析不能同时进行功能仿真。' },
+  { id: 'q72', type: 'tf', group: 'fpga', text: 'STA 仅适用于同步时序电路。', answer: true, explanation: '这是 STA 的局限之一。' },
+  { id: 'q73', type: 'mcq', group: 'fpga', text: '建立时间 setup time 是相对于时钟有效沿的哪个方向？', options: ['之前', '之后', '任意时刻', '只在复位期间'], answer: 0, explanation: '建立时间要求数据在时钟有效沿之前保持稳定。' },
+  { id: 'q74', type: 'mcq', group: 'fpga', text: '保持时间 hold time 是相对于时钟有效沿的哪个方向？', options: ['之前', '之后', '只在组合逻辑内', '与时钟无关'], answer: 1, explanation: '保持时间要求数据在时钟有效沿之后保持稳定。' },
+  { id: 'q75', type: 'tf', group: 'fpga', text: 'Tlaunch 和 Tcapture 由时钟网络缓冲器和连线延迟产生。', answer: true, explanation: '提纲中明确说明 Tlaunch、Tcapture 来源于时钟网络缓冲器和连线延迟。' },
+  { id: 'q76', type: 'mcq', group: 'fpga', text: '逻辑综合实现了从什么到什么的转换？', options: ['软件描述到硬件结构', 'PCB 到封装外壳', '电源线到地线', '图片到视频'], answer: 0, explanation: '逻辑综合实现软件描述到硬件结构的转换。' },
+  { id: 'q77', type: 'tf', group: 'fpga', text: '设计规则约束可包括面积、位置、最大扇入扇出、最大电容等。', answer: true, explanation: '这些都是工艺规则相关的设计规则约束。' },
+  { id: 'q78', type: 'mcq', group: 'fpga', text: '时序约束主要针对芯片工作时钟，以下哪项属于时序约束示例？', options: ['时钟周期、接口时序、延时', '民用、工业、军事', '喷锡、沉金、沉银', '机箱、外壳、连接线缆'], answer: 0, explanation: '时序约束包括时钟周期、接口时序、延时等。' },
+  { id: 'q79', type: 'tf', group: 'fpga', text: '在时序约束中，uncertainty 可由 jitter 和 skew 共同构成。', answer: true, explanation: '图中示例为 uncertainty = jitter + skew。' },
+  { id: 'q80', type: 'mcq', group: 'fpga', text: 'Top-Down 流程中，后端初步设计通常对应哪一项？', options: ['版图预布局布线、时钟树建立', '电子系统接地', 'FR-4 覆铜板组成', '阻焊图绘制'], answer: 0, explanation: '框图中版图预布局布线、时钟树建立对应后端初步设计。' }
 ];
 
 let activeFilter = 'all';
