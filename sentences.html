@@ -52,6 +52,12 @@ h1 { font-size: clamp(1.45rem, 3vw, 2.35rem); line-height: 1.2; margin-top: 4px;
 .sentence-item.active { border-color: #b87535; background: #fff0dd; }
 .tag { display: inline-block; font-size: 0.72rem; color: #2f4d68; font-weight: 800; margin-bottom: 4px; }
 .prompt { font-size: 1.05rem; line-height: 1.8; margin: 10px 0 14px; color: #3b3026; }
+.sentence-hint {
+  display: inline-flex; gap: 8px; align-items: center;
+  margin: 0 0 14px; padding: 6px 12px; border-radius: 999px;
+  background: #eef4f8; color: #2f4d68; border: 1px solid #d5e3ee;
+  font-size: 0.82rem; font-weight: 800;
+}
 .topic { color: #b87535; font-size: 0.82rem; font-weight: 900; letter-spacing: 0.08em; }
 textarea {
   width: 100%; min-height: 210px; resize: vertical; border: 1px solid #dac9b6; border-radius: 18px;
@@ -106,6 +112,7 @@ textarea:focus { border-color: #b87535; box-shadow: 0 0 0 4px rgba(184,117,53,0.
       <div class="topic" id="topic">PCB</div>
       <h2 id="title">题目标题</h2>
       <p class="prompt" id="prompt">提示文本</p>
+      <div class="sentence-hint" id="sentenceHint">标准答案：1 句</div>
       <textarea id="answerInput" placeholder="在这里默写完整句子……"></textarea>
       <div class="actions">
         <button class="btn primary" onclick="checkAnswer()">检查默写</button>
@@ -170,6 +177,11 @@ function visibleSentences() { return activeFilter === 'all' ? SENTENCES : SENTEN
 function currentSentence() { const list = visibleSentences(); return list[Math.min(currentIndex, list.length - 1)] || list[0]; }
 
 function normalize(text) { return text.toLowerCase().replace(/[\s，。；、：：“”"'（）()\-—−,.;:!?！？]/g, ''); }
+function sentenceCount(text) {
+  const pieces = text.split(/[。！？!?]+/).map(s => s.trim()).filter(Boolean);
+  return Math.max(1, pieces.length);
+}
+function charCount(text) { return normalize(text).length; }
 function lcs(a, b) {
   const dp = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
   for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] + 1 : Math.max(dp[i-1][j], dp[i][j-1]);
@@ -200,6 +212,7 @@ function renderPage() {
   document.getElementById('topic').textContent = s.group === 'pcb' ? '电子系统 / PCB' : 'FPGA';
   document.getElementById('title').textContent = s.title;
   document.getElementById('prompt').textContent = s.prompt;
+  document.getElementById('sentenceHint').textContent = `标准答案：${sentenceCount(s.answer)} 句 · 约 ${charCount(s.answer)} 字`;
   document.getElementById('answerInput').value = '';
   document.getElementById('feedback').classList.remove('show');
   renderList();
