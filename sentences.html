@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>句子级背诵练习</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  min-height: 100vh;
+  font-family: "Songti SC", "Noto Serif SC", "STSong", serif;
+  color: #30281f;
+  background:
+    radial-gradient(circle at 15% 12%, rgba(184,117,53,0.18), transparent 30%),
+    radial-gradient(circle at 85% 0%, rgba(47,77,104,0.18), transparent 34%),
+    linear-gradient(135deg, #f7f1e8, #fbf8f0 52%, #efe4d5);
+}
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  backdrop-filter: blur(20px);
+  background: rgba(247,241,232,0.88);
+  border-bottom: 1px solid rgba(90,72,50,0.12);
+}
+.topbar-inner { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 18px 0; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.brand { flex: 1; min-width: 260px; }
+.eyebrow { color: #b87535; font-size: 0.76rem; letter-spacing: 0.16em; font-weight: 800; }
+h1 { font-size: clamp(1.45rem, 3vw, 2.35rem); line-height: 1.2; margin-top: 4px; }
+.muted { color: #7d6d5b; font-size: 0.92rem; margin-top: 6px; }
+.btn, .nav-link, select {
+  border: 1px solid rgba(90,72,50,0.18); border-radius: 999px;
+  background: rgba(255,255,255,0.54); color: #4b3d2d;
+  padding: 9px 16px; font-family: inherit; font-weight: 800; cursor: pointer; text-decoration: none;
+  transition: transform 0.18s, background 0.18s, box-shadow 0.18s;
+}
+.btn:hover, .nav-link:hover, select:hover { transform: translateY(-1px); background: rgba(255,255,255,0.86); box-shadow: 0 8px 22px rgba(90,72,50,0.10); }
+.btn.primary { background: #b87535; border-color: #b87535; color: white; }
+.shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 60px; }
+.grid { display: grid; grid-template-columns: 320px 1fr; gap: 18px; align-items: start; }
+.panel, .practice {
+  background: rgba(255,255,255,0.72); border: 1px solid rgba(90,72,50,0.12);
+  border-radius: 24px; box-shadow: 0 16px 42px rgba(90,72,50,0.08);
+}
+.panel { padding: 18px; position: sticky; top: 108px; }
+.practice { padding: 24px; overflow: hidden; position: relative; }
+.practice::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: linear-gradient(90deg, #b87535, #2f4d68); }
+.stat { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0; }
+.stat div { background: #fff8ee; border: 1px solid #eadccb; border-radius: 16px; padding: 12px; }
+.stat span { display: block; color: #8a7a67; font-size: 0.76rem; }
+.stat strong { font-size: 1.4rem; }
+.sentence-list { display: grid; gap: 8px; max-height: 55vh; overflow: auto; padding-right: 4px; }
+.sentence-item { border: 1px solid #e3d6c8; background: #fffaf4; border-radius: 14px; padding: 9px 11px; cursor: pointer; font-size: 0.88rem; line-height: 1.45; }
+.sentence-item.active { border-color: #b87535; background: #fff0dd; }
+.tag { display: inline-block; font-size: 0.72rem; color: #2f4d68; font-weight: 800; margin-bottom: 4px; }
+.prompt { font-size: 1.05rem; line-height: 1.8; margin: 10px 0 14px; color: #3b3026; }
+.topic { color: #b87535; font-size: 0.82rem; font-weight: 900; letter-spacing: 0.08em; }
+textarea {
+  width: 100%; min-height: 210px; resize: vertical; border: 1px solid #dac9b6; border-radius: 18px;
+  background: #fffaf3; padding: 16px; font: inherit; line-height: 1.8; color: #2f271f; outline: none;
+}
+textarea:focus { border-color: #b87535; box-shadow: 0 0 0 4px rgba(184,117,53,0.12); }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0; }
+.feedback { display: none; margin-top: 16px; padding: 16px; border-radius: 18px; background: #fff8ee; border: 1px solid #eadccb; }
+.feedback.show { display: block; }
+.score { font-size: 2rem; font-weight: 900; color: #b87535; }
+.answer { margin-top: 12px; padding-top: 12px; border-top: 1px dashed #d9c8b5; line-height: 1.9; }
+.diff { margin-top: 10px; color: #7d6d5b; font-size: 0.92rem; }
+.pill { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #eef4f8; color: #2f4d68; font-size: 0.74rem; font-weight: 800; margin-right: 6px; }
+@media (max-width: 860px) {
+  .grid { grid-template-columns: 1fr; }
+  .panel { position: static; }
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="eyebrow">SENTENCE RECITATION</div>
+      <h1>句子级背诵练习</h1>
+      <p class="muted">根据提示默写整句，系统按相似度评分；适合背定义、流程、原则与公式。</p>
+    </div>
+    <a class="nav-link" href="index.html">← 挖空背诵</a>
+    <a class="nav-link" href="quiz.html">📝 题库</a>
+  </div>
+</header>
+
+<main class="shell">
+  <div class="grid">
+    <aside class="panel">
+      <label class="tag" for="filter">章节筛选</label>
+      <select id="filter" onchange="setFilter(this.value)">
+        <option value="all">全部</option>
+        <option value="pcb">电子系统/PCB</option>
+        <option value="fpga">FPGA</option>
+      </select>
+      <div class="stat">
+        <div><span>句子数</span><strong id="totalCount">0</strong></div>
+        <div><span>当前</span><strong id="currentNo">1</strong></div>
+        <div><span>最高分</span><strong id="bestScore">0%</strong></div>
+        <div><span>已练</span><strong id="doneCount">0</strong></div>
+      </div>
+      <div class="sentence-list" id="sentenceList"></div>
+    </aside>
+
+    <section class="practice">
+      <div class="topic" id="topic">PCB</div>
+      <h2 id="title">题目标题</h2>
+      <p class="prompt" id="prompt">提示文本</p>
+      <textarea id="answerInput" placeholder="在这里默写完整句子……"></textarea>
+      <div class="actions">
+        <button class="btn primary" onclick="checkAnswer()">检查默写</button>
+        <button class="btn" onclick="revealAnswer()">显示原句</button>
+        <button class="btn" onclick="clearInput()">清空</button>
+        <button class="btn" onclick="randomSentence()">随机一句</button>
+        <button class="btn" onclick="nextSentence()">下一句</button>
+      </div>
+      <div class="feedback" id="feedback">
+        <div>相似度：<span class="score" id="score">0%</span></div>
+        <div class="diff" id="diff"></div>
+        <div class="answer" id="answerBox"></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+const SENTENCES = [
+  { id: 's1', group: 'pcb', title: '电子系统定义', prompt: '默写“电子系统”的定义。', answer: '将由电子元器件或部件组成的能够产生、传输、采集或处理电信号及信息的客观实体称为电子系统。' },
+  { id: 's2', group: 'pcb', title: '印制线路板', prompt: '默写印制线路板的英文和缩写。', answer: '印制线路板简称印制板，英文为 Printed Circuit Board，缩写为 PCB。' },
+  { id: 's3', group: 'pcb', title: '印制电路概念', prompt: '默写印制电路概念的提出者和工艺。', answer: '印制电路概念于 1936 年由英国 Eisler 博士提出，首创了铜箔腐蚀法工艺。' },
+  { id: 's4', group: 'pcb', title: 'PCB 发展', prompt: '默写 PCB 发展的三个年份节点。', answer: '1953 年出现了双面板，并采用电镀工艺使两面导线互连；1960 年出现了多层板；1990 年出现了积层多层板。' },
+  { id: 's5', group: 'pcb', title: 'FR-4 组成', prompt: '默写常用 FR-4 覆铜板组成。', answer: '常用 FR-4 覆铜板由玻璃纤维布、环氧树脂、铜箔、填料组成。' },
+  { id: 's6', group: 'pcb', title: 'PCB 布局总原则', prompt: '默写 PCB 布局中信号分开的原则。', answer: '布局应使高电压、大电流信号与小电流、低电压弱信号完全分开，模拟信号与数字信号分开，高频信号与低频信号分开。' },
+  { id: 's7', group: 'pcb', title: '去耦电容布局', prompt: '默写去耦电容布局要求。', answer: '去耦电容的布局要尽量靠近芯片电源管脚，并使其与电源和地之间形成的回路最短。' },
+  { id: 's8', group: 'pcb', title: '匹配电阻布局', prompt: '默写串联匹配和负载匹配电阻的位置。', answer: '串联匹配电阻靠近信号驱动端，负载匹配电阻靠近信号接收端。' },
+  { id: 's9', group: 'pcb', title: 'PCB 布线转角', prompt: '默写 PCB 布线转角原则。', answer: '转角处采用 45° 折线或弧线布线，不可使用 90° 折线，以减小高频信号辐射和波形畸变。' },
+  { id: 's10', group: 'pcb', title: '布线优化', prompt: '默写布线完成后的优化要求。', answer: '布线完成后应进行优化；经初步网络检查和 DRC 检查无误后，对未布线区域进行地线填充，用大面积铜层作地线。' },
+  { id: 's11', group: 'pcb', title: '电源特点', prompt: '默写开关电源和线性电源特点。', answer: '开关电源效率高、功率大、输出电源调整灵活，但噪声纹波大；线性电源效率低、功率有限，但噪声纹波小。' },
+  { id: 's12', group: 'pcb', title: '数字/模拟电源', prompt: '默写数字电源和模拟电源设计考虑。', answer: '数字电源和模拟电源应分开设计；多电源系统需独立规划，并综合考虑电源功耗、电源噪声干扰来源以及线性电源、开关电源的特点。' },
+  { id: 's13', group: 'pcb', title: '电子系统接地', prompt: '默写接地对于信号互连和 EMC 的作用。', answer: '设备之间信号互连要求各设备都要有一个基准地作为信号参考地；接地还可解决信号之间互扰等电磁兼容问题。' },
+  { id: 's14', group: 'pcb', title: '数字地/模拟地', prompt: '默写数字地和模拟地处理原则。', answer: '模拟地和数字地要分开处理，单点接在一起，并尽量阻隔数字地上的噪声进入模拟地。' },
+
+  { id: 's15', group: 'fpga', title: 'FPGA 构成', prompt: '默写 FPGA 内部主要构成单元。', answer: 'FPGA 内部主要构成单元包括 CLB、IOB、连接资源以及硬核。' },
+  { id: 's16', group: 'fpga', title: '层次化设计', prompt: '默写集成电路层次化设计层次。', answer: '集成电路层次化设计包含系统层、算法层、寄存器传输层、逻辑层、电路层和版图层。' },
+  { id: 's17', group: 'fpga', title: '设计输入方式', prompt: '默写 FPGA 设计输入方式分类。', answer: 'FPGA 设计输入方式主要包括图形描述方式、文字描述方式以及图形、文字交叉使用三类。' },
+  { id: 's18', group: 'fpga', title: '图形描述特点', prompt: '默写图形描述方式特点。', answer: '图形描述方式直观易懂，适合描述器件内部互联关系，但受工艺库、逻辑宏单元限制，通用性和可移植性差。' },
+  { id: 's19', group: 'fpga', title: '语言描述特点', prompt: '默写语言描述方式特点。', answer: '语言描述方式可以描述电路结构，也可以描述电路行为，适合描述复杂行为，硬件描述语言主要有 VHDL 和 Verilog HDL 两种。' },
+  { id: 's20', group: 'fpga', title: 'Top-Down 流程', prompt: '默写 FPGA 自顶向下流程最终目标。', answer: 'FPGA 设计采用自顶向下的层次化设计流程，最终完成系统版图数据提交，即 Tape out。' },
+  { id: 's21', group: 'fpga', title: '逻辑仿真', prompt: '默写逻辑仿真的定义。', answer: '逻辑仿真是利用计算机软件工具构造硬件模型，给定输入激励，模拟确定电路响应，验证硬件设计正确性的过程。' },
+  { id: 's22', group: 'fpga', title: '动态时序仿真', prompt: '默写动态时序仿真的缺点。', answer: '对大规模集成电路，创建时序测试向量和功能测试向量的工作量巨大且耗时，不可能开发出完备测试向量找出所有潜在故障。' },
+  { id: 's23', group: 'fpga', title: 'STA 定义', prompt: '默写静态时序分析定义和基本思想。', answer: '静态时序分析是基于路径对设计进行时序分析，根据电路网表拓扑将设计分成若干路径集合，计算每条路径上的延时并判断电路时序。' },
+  { id: 's24', group: 'fpga', title: 'STA 优点', prompt: '默写静态时序分析的主要优点。', answer: '静态时序分析无需外加测试激励，运行速度快，占用内存小，可以找到关键路径并穷尽所有路径的时序信息。' },
+  { id: 's25', group: 'fpga', title: '建立时间', prompt: '默写建立时间定义。', answer: '建立时间是指在时钟有效沿之前，数据输入端信号必须保持稳定的最短时间。' },
+  { id: 's26', group: 'fpga', title: '保持时间', prompt: '默写保持时间定义。', answer: '保持时间是指在时钟有效沿之后，数据输入端信号必须保持稳定的最短时间。' },
+  { id: 's27', group: 'fpga', title: '建立时间约束', prompt: '默写建立时间分析中的到达时间、要求时间和约束。', answer: '建立时间分析中，数据到达时间为 Ta=Tlaunch+Tck2q+Tdp，要求时间为 Tr=Tcapture+Tclk−Tsetup，建立时间约束为 Tr−Ta=Tmargin≥0。' },
+  { id: 's28', group: 'fpga', title: '保持时间约束', prompt: '默写保持时间分析中的到达时间、要求时间和约束。', answer: '保持时间分析中，数据到达时间为 Ta=Tlaunch+Tck2q+Tdp，要求时间为 Tr=Tcapture+Thold，保持时间约束为 Ta−Tr=Tmargin≥0。' },
+  { id: 's29', group: 'fpga', title: '逻辑综合', prompt: '默写逻辑综合定义。', answer: '逻辑综合是根据设计的逻辑功能和行为描述，在面积、时序、功耗等约束条件下，利用 EDA 工具生成逻辑门电路，实现软件描述到硬件结构的转换。' },
+  { id: 's30', group: 'fpga', title: '逻辑综合输入', prompt: '默写输入逻辑综合工具的三种信息。', answer: '输入逻辑综合工具的三种信息包括 RTL 级描述、约束条件和工艺库。' },
+  { id: 's31', group: 'fpga', title: 'RTL 描述', prompt: '默写 RTL 级描述定义。', answer: 'RTL 级描述了数字电路中寄存器之间的数据传输和逻辑操作，将电路系统视为由寄存器和连接它们的组合逻辑构成。' },
+  { id: 's32', group: 'fpga', title: '约束条件', prompt: '默写 FPGA 设计中的约束类型。', answer: 'FPGA 设计中的约束条件主要包括环境约束、时序约束和设计规则约束。' },
+  { id: 's33', group: 'fpga', title: '面积与延时', prompt: '默写面积约束和延时约束关系。', answer: '面积约束和延时约束是相互矛盾的关系，减小延时通常需要更多硬件资源，而减小面积可能增加延时。' },
+  { id: 's34', group: 'fpga', title: '时钟不确定性', prompt: '默写时钟不确定性的两个来源。', answer: '时钟的不确定性主要包括时钟抖动和时钟偏斜，其中 jitter 是时钟边沿相对于理想边沿的时间波动，skew 是同一时钟到达不同位置产生的时间差。' }
+];
+
+let activeFilter = 'all';
+let currentIndex = 0;
+const stats = new Map();
+
+function visibleSentences() { return activeFilter === 'all' ? SENTENCES : SENTENCES.filter(s => s.group === activeFilter); }
+function currentSentence() { const list = visibleSentences(); return list[Math.min(currentIndex, list.length - 1)] || list[0]; }
+
+function normalize(text) { return text.toLowerCase().replace(/[\s，。；、：：“”"'（）()\-—−,.;:!?！？]/g, ''); }
+function lcs(a, b) {
+  const dp = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] + 1 : Math.max(dp[i-1][j], dp[i][j-1]);
+  return dp[a.length][b.length];
+}
+function similarity(user, answer) {
+  const u = normalize(user), a = normalize(answer);
+  if (!u || !a) return 0;
+  return Math.round((2 * lcs(u, a) / (u.length + a.length)) * 100);
+}
+
+function renderList() {
+  const root = document.getElementById('sentenceList');
+  root.innerHTML = '';
+  visibleSentences().forEach((s, i) => {
+    const item = document.createElement('button');
+    item.className = 'sentence-item' + (i === currentIndex ? ' active' : '');
+    item.innerHTML = `<span class="tag">${s.group.toUpperCase()}</span><br>${i + 1}. ${s.title}`;
+    item.onclick = () => { currentIndex = i; renderPage(); };
+    root.appendChild(item);
+  });
+}
+
+function renderPage() {
+  const list = visibleSentences();
+  if (currentIndex >= list.length) currentIndex = 0;
+  const s = currentSentence();
+  document.getElementById('topic').textContent = s.group === 'pcb' ? '电子系统 / PCB' : 'FPGA';
+  document.getElementById('title').textContent = s.title;
+  document.getElementById('prompt').textContent = s.prompt;
+  document.getElementById('answerInput').value = '';
+  document.getElementById('feedback').classList.remove('show');
+  renderList();
+  updateStats();
+}
+
+function checkAnswer() {
+  const s = currentSentence();
+  const user = document.getElementById('answerInput').value.trim();
+  const score = similarity(user, s.answer);
+  const prev = stats.get(s.id) || 0;
+  stats.set(s.id, Math.max(prev, score));
+  document.getElementById('score').textContent = score + '%';
+  document.getElementById('diff').textContent = score >= 90 ? '非常接近，可以进入下一句。' : score >= 70 ? '大意正确，建议补齐关键词和顺序。' : '差距较大，建议先显示原句再复述。';
+  document.getElementById('answerBox').innerHTML = `<span class="pill">原句</span>${s.answer}`;
+  document.getElementById('feedback').classList.add('show');
+  updateStats();
+}
+
+function revealAnswer() {
+  const s = currentSentence();
+  document.getElementById('answerInput').value = s.answer;
+  checkAnswer();
+}
+
+function clearInput() {
+  document.getElementById('answerInput').value = '';
+  document.getElementById('feedback').classList.remove('show');
+}
+
+function nextSentence() {
+  const list = visibleSentences();
+  currentIndex = (currentIndex + 1) % list.length;
+  renderPage();
+}
+
+function randomSentence() {
+  const list = visibleSentences();
+  currentIndex = Math.floor(Math.random() * list.length);
+  renderPage();
+}
+
+function setFilter(filter) {
+  activeFilter = filter;
+  currentIndex = 0;
+  renderPage();
+}
+
+function updateStats() {
+  const list = visibleSentences();
+  const s = currentSentence();
+  document.getElementById('totalCount').textContent = list.length;
+  document.getElementById('currentNo').textContent = list.length ? currentIndex + 1 : 0;
+  document.getElementById('bestScore').textContent = ((s && stats.get(s.id)) || 0) + '%';
+  document.getElementById('doneCount').textContent = Array.from(stats.keys()).filter(id => list.some(s => s.id === id)).length;
+}
+
+document.addEventListener('DOMContentLoaded', renderPage);
+</script>
+</body>
+</html>
